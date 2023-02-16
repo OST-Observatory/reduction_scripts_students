@@ -1,0 +1,31 @@
+---
+#   basti-iac isochrones -> [Fe/H]=−1.58, Z = 0.0004, Y = 0.2476, [α/Fe]=0,
+#   overshooting, diffusion, mass loss efficiency η = 0.3
+
+#   Files
+#isos: "~/scripts/python/n2/iso/basti-iac/FEHm155/all/"
+isos: "~/scripts/n2/iso/basti-iac/FEHm155/1Gyr/"
+
+#   Type
+isotype: 'directory'
+
+#   Type of the second filter used in CMD plots
+ISOcolumntype:
+    'B': 'single'
+
+#   ID of the columns in the isochrone data file containing the magnitudes
+#   and the age
+ISOcolumn:
+    'V': 8
+    'B': 7
+    'AGE': 0
+
+#   Keyword to identify a new isochrone
+keyword: None
+
+#   Logarithmic age
+logAGE: true
+
+#   Plot legend for isochrones?
+IsoLabels: true
+...

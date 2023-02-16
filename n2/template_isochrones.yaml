@@ -1,0 +1,48 @@
+---
+#   Unkown/new isochrones
+
+#   Files   (Path to the isochrone file or the directory containing
+#            individual isochrone files)
+isos: ''
+
+#   Type    -> either 'directory' or 'file'
+#              directory = individual isochrone files located in a
+#                          single directory
+#              file      = a single file containing several
+#                          isochrones
+isotype: '?'
+
+#   Type of the second filter used in CMD plots
+#       -> Can be either 'color' or 'single'
+#       -> Needs to be given as a python dictionary
+#           -> ISOcolumntype = {'B':'color'} if 'B-V'
+#              vs.
+#              ISOcolumntype = {'B':'single'} if 'B'
+#           -> Can contain several entries, if more than one CMD should be
+#              plotted
+ISOcolumntype:
+    'B': '?'
+
+#   ID of the columns in the isochrone data file containing the magnitudes
+#   and the age
+#       -> Set age column to 0 if there is none
+#       -> THE SCRIPT WILL TRY TO EXTRACT THE AGE FROM THE
+#          key word liISOcolumntype
+ISOcolumn:
+    'V': ?
+    'B': ?
+    'AGE': 0
+
+#   Keyword to identify a new isochrone
+#           -> Used if the isochrones are in a single file
+#           -> The keyword must be at the beginning of the
+#              corresponding line.
+keyword: '?'
+
+#   Logarithmic age -> Set to True, if the age is given in
+#                      logarithmic units, otherwise set to False
+logAGE: true
+
+#   Plot legend for isochrones?
+IsoLabels: true
+...

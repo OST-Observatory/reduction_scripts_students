@@ -2,9 +2,9 @@
 #   PARCES isochrones (CMD 3.6, no TP-AGB evolution)
 
 #   Files
-#isos: '~/scripts/n2/iso/parsec_iso/3p6/solar_1Gyr/iso_parsec_1Gyr_noTP-AGB.dat'
-#isos: '~/scripts/n2/iso/parsec_iso/3p6/solar_0p5Gyr/iso_parsec_0p5Gyr_noTP-AGB.dat'
-isos: '~/scripts/n2/iso/parsec_iso/3p6/solar_0p2Gyr/iso_parsec_0p2Gyr_noTP-AGB.dat'
+#isos: '~/isochrone_database/parsec_iso/3p6/solar_1Gyr/iso_parsec_1Gyr_noTP-AGB.dat'
+#isos: '~/isochrone_database/parsec_iso/3p6/solar_0p5Gyr/iso_parsec_0p5Gyr_noTP-AGB.dat'
+isos: '~/isochrone_database/parsec_iso/3p6/solar_0p2Gyr/iso_parsec_0p2Gyr_noTP-AGB.dat'
 
 #   Type
 isotype: 'file'

@@ -2,9 +2,9 @@
 #   PARCES isochrones (CMD 3.6)
 
 #   Files
-#isos: '~/scripts/n2/iso/parsec_iso/3p6/solar_0p2Gyr/iso_parsec_0p2Gyr.dat'
-#isos: '~/scripts/n2/iso/parsec_iso/3p6/solar_0p5Gyr/iso_parsec_0p5Gyr.dat'
-isos: '~/scripts/n2/iso/parsec_iso/3p6/solar_1Gyr/iso_parsec_1Gyr.dat'
+#isos: '~/isochrone_database/parsec_iso/3p6/solar_0p2Gyr/iso_parsec_0p2Gyr.dat'
+#isos: '~/isochrone_database/parsec_iso/3p6/solar_0p5Gyr/iso_parsec_0p5Gyr.dat'
+isos: '~/isochrone_database/parsec_iso/3p6/solar_1Gyr/iso_parsec_1Gyr.dat'
 
 #   Type
 isotype: 'file'

@@ -1,17 +1,17 @@
 --- # YY isochrones
 #   Files
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z01/yy00g.x74z01a0o2v2"
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z01/yy00g.x74z01a2o2v2"
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z01/yy00g.x74z01a4o2v2"
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z01/yy00l.x74z01a0o2v2"
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z01/yy00l.x74z01a2o2v2"
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z01/yy00l.x74z01a4o2v2"
-isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z02/yy00g.x71z02a0o2v2"
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z02/yy00l.x71z02a0o2v2"
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z004/yy00g.x758z004a0o2v2"
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z004/yy00l.x758z004a4o2v2"
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z0001/yy00g.x7697z0001a0o2v2"
-#isos: "~/scripts/n2/iso/yy_isochrones/V2/Iso/z0001/yy00l.x7697z0001a4o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00g.x74z01a0o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00g.x74z01a2o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00g.x74z01a4o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00l.x74z01a0o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00l.x74z01a2o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00l.x74z01a4o2v2"
+isos: "~/isochrone_database/yy_isochrones/V2/Iso/z02/yy00g.x71z02a0o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z02/yy00l.x71z02a0o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z004/yy00g.x758z004a0o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z004/yy00l.x758z004a4o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z0001/yy00g.x7697z0001a0o2v2"
+#isos: "~/isochrone_database/yy_isochrones/V2/Iso/z0001/yy00l.x7697z0001a4o2v2"
 
 #   Type
 isotype: 'file'

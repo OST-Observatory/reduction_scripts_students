@@ -3,8 +3,8 @@
 #   overshooting, diffusion, mass loss efficiency η = 0.3
 
 #   Files
-#isos: "~/scripts/python/n2/iso/basti-iac/FEHm155/all/"
-isos: "~/scripts/n2/iso/basti-iac/FEHm155/1Gyr/"
+#isos: "~/isochrone_database/basti-iac/FEHm155/all/"
+isos: "~/isochrone_database/basti-iac/FEHm155/1Gyr/"
 
 #   Type
 isotype: 'directory'

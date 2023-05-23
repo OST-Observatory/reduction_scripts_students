@@ -114,6 +114,12 @@ lineFile = "atomic_lines.tsv"
 
 
 ###
+#   Apply barycentric correction?
+#
+correct_bary = False
+
+
+###
 #   Debug options
 #
 #   Debug plot: Creates a plot that can be used check order merging
@@ -2137,15 +2143,17 @@ if __name__ == '__main__':
     #                                     correction
     #                                  2) add radial velocity
     #
-    try:
-        bvc = bary_correction(File_merged)
-    except:
-        print(
-            f"{bcolors.WARNING}   Barycentric velocity correction could not "
-            f"be determined. Assume 0 km/s.{bcolors.ENDC}"
-            )
-        bvc = 0.
-    velocity_correction = radial_velocity - bvc
+    if correct_bary:
+        try:
+            bvc = bary_correction(File_merged)
+        except:
+            print(
+                f"{bcolors.WARNING}   Barycentric velocity correction could not "
+                f"be determined. Assume 0 km/s.{bcolors.ENDC}"
+                )
+            bvc = 0.
+        velocity_correction = radial_velocity - bvc
+    velocity_correction = radial_velocity
 
     wave_merged = correct_for_rv(
         wave_merged,

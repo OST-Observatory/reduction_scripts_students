@@ -187,25 +187,13 @@ if __name__ == '__main__':
             )
         sys.exit()
 
-    #   Read file with isochrone specification
-    iso_config = aux_general.read_params_from_yaml(iso_config_file)
-    isos = iso_config.get('isos', '')
-    isotype = iso_config['isotype']
-    ISOcolumntype = iso_config['ISOcolumntype']
-    ISOcolumn = iso_config['ISOcolumn']
-    keyword = iso_config['keyword']
-    logAGE = iso_config['logAGE']
-    IsoLabels = iso_config['IsoLabels']
-
-    #   Check variable
-    filename, filetype = aux.check_variable(
+    #   Check variables
+    filename, filetype = aux.check_variable_apparent_cmd(
         filename,
         filetype,
         filt_1,
         filt_2,
         cali,
-        ISOcolumntype,
-        ISOcolumn,
         )
 
     #   Loop over all CMDs/colors
@@ -278,6 +266,28 @@ if __name__ == '__main__':
                 f'{bcolors.ENDC}{bcolors.BOLD} CMD ({filt_1} vs. {fil}-'
                 f'{filt_1}){bcolors.ENDC}'
                 )
+
+            #   Read file with isochrone specification
+            iso_config = aux_general.read_params_from_yaml(iso_config_file)
+            if iso_config:
+                isos = iso_config.get('isos', '')
+                isotype = iso_config['isotype']
+                ISOcolumntype = iso_config['ISOcolumntype']
+                ISOcolumn = iso_config['ISOcolumn']
+                keyword = iso_config['keyword']
+                logAGE = iso_config['logAGE']
+                IsoLabels = iso_config['IsoLabels']
+
+                #   Check isochrone parameters
+                aux.check_variable_absolute_cmd(
+                    filt_1,
+                    filt_2,
+                    ISOcolumntype,
+                    ISOcolumn,
+                    )
+            else:
+                isos, isotype, ISOcolumntype, ISOcolumn = '', '', '', ''
+                keyword, logAGE, IsoLabels = '', '', ''
 
             #   Correct for reddening and distance
             AV        = RV*eB_V

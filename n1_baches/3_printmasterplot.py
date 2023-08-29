@@ -6,13 +6,13 @@
 ############################################################################
 
 #   Name of file with individual orders
-File_orders = "master_spectrum_wr.fit"
+file_with_orders = "master_spectrum_wr.fit"
 
 #   Name of file with merged spectrum
-File_merged = "master_spectrum_wrm.fit"
+file_with_merged_spectrum = "master_spectrum_wrm.fit"
 
 #   Name of the object
-objectname = "star"
+object_name = "star"
 
 ###
 #   Radial velocity [km/s]
@@ -33,7 +33,7 @@ ions = []
 manual_lines = {"Example Element": [[0., "center"]]}
 
 #   Percent the line flux must be lower than the continuum
-line_lower_continuum = 3.
+percentage_line_flux_must_be_below_continuum = 3.
 
 ############################################################################
 #                Additional options: only edit if necessary                #
@@ -58,11 +58,11 @@ panel_wave_range = 500
 
 #   Number of panels on each page/plot
 #   (panel_version=default)
-n_panel = 5
+n_panels_per_page = 5
 
 #   Number of panels into which the spectrum should be split
 #   (panel_version=default)
-divinto = 21
+n_panels = 21
 
 ###
 #   Normalization ?
@@ -80,7 +80,7 @@ norm_version = 'median_max_window'
 #   Normalize before merging of the orders
 #   Possibilities: True or False
 #   If `False` the orders will be merged first and the merged spectrum will
-#   be normalized afterwards.
+#   be normalized afterward.
 #   (norm_version = specutils_continuum)
 norm_individual = False
 # norm_individual = True
@@ -95,17 +95,17 @@ median_window = 61
 
 #   Number of wavelength bins that should be removed from the beginning
 #   of the orders to improve flux normalization between the orders
-trim_value = 0
-# trim_value = 400
+trim_value_start_order = 0
+# trim_value_start_order = 400
 
 
 ###
 #   Line identifications
 #
 #   File containing line identifications
-# lineFile = ""
-# lineFile = "absorption_lines.dat"
-lineFile = "/home/pollux/reduction_scripts_students/n1_baches/atomic_lines.tsv"
+# line_file = ""
+# line_file = "absorption_lines.dat"
+line_file = "/home/pollux/reduction_scripts_students/n1_baches/atomic_lines.tsv"
 
 ###
 #   Apply barycentric correction?
@@ -216,7 +216,7 @@ font = {'family': 'serif',
         }
 
 
-def consecutive(data, stepsize=1):
+def consecutive(data, step_size=1):
     """
         Find consecutive elements in a numpy array
 
@@ -228,10 +228,10 @@ def consecutive(data, stepsize=1):
         data       : `numpy.ndarray`
             Data array
 
-        stepsize   : `integer`, optional
+        step_size  : `integer`, optional
             Step size between the consecutive elements
     """
-    return np.split(data, np.where(np.diff(data) != stepsize)[0] + 1)
+    return np.split(data, np.where(np.diff(data) != step_size)[0] + 1)
 
 
 def bary_correction(fits_file):
@@ -254,85 +254,88 @@ def bary_correction(fits_file):
     #   Extract header information
     try:
         date = header['JD']
-        obs_time = Time(date, format='jd', scale='utc')
+        observation_time = Time(date, format='jd', scale='utc')
     except RuntimeError:
         date = header['DATE-OBS']
-        obs_time = Time(date, format='fits', scale='utc')
+        observation_time = Time(date, format='fits', scale='utc')
 
     ra = header['OBJCTRA']
     dec = header['OBJCTDEC']
     observatory_latitude = header.get('SITELAT', 52.4)
     observatory_longitude = header.get('SITELONG', 12.96)
-    observatory_height_above_MSL = header.get('SITEHIGH', 40.)
+    observatory_height_above_msl = header.get('SITEHIGH', 40.)
 
     #   Define Location
-    obs_site = EarthLocation(
+    observation_site = EarthLocation(
         lat=observatory_latitude,
         lon=observatory_longitude,
-        height=observatory_height_above_MSL,
+        height=observatory_height_above_msl,
     )
 
     #   Calculate barycentric velocity correction with the help of a
     #   SkyCoord object
-    obs_coord = SkyCoord(
+    observation_coordinates = SkyCoord(
         ra=ra,
         dec=dec,
         unit=(u.hourangle, u.deg),
         frame='icrs',
-        obstime=obs_time,
-        location=obs_site
+        obstime=observation_time,
+        location=observation_site
     )
 
-    bvc = obs_coord.radial_velocity_correction(kind='barycentric').to(u.km / u.s)
+    bvc_value = observation_coordinates.radial_velocity_correction(kind='barycentric').to(u.km / u.s).value
 
-    return bvc.value
+    return bvc_value
 
 
-def correct_for_rv(wl, flx, rv, name_obj, plot=False, mtype=None):
+def correct_for_radial_velocity(wave_length, flux, radial_velocity, name_obj,
+                                plot=False, merge_type=None):
     """
         Correct wave length array for radial velocity
 
         Parameters
         ----------
-        wl              : `numpy.ndarray`
+        wave_length         : `numpy.ndarray`
             Wavelength data
 
-        flx             : `numpy.ndarray`
+        flux                : `numpy.ndarray`
             Flux data
 
-        rv              : `float`
+        radial_velocity     : `float`
             Radial velocity
 
-        name_obj        : `string`
+        name_obj            : `string`
             Name of the object
 
-        plot            : `boolean`, optional
+        plot                : `boolean`, optional
             If `True` the plot will be shown
             Default is ``False``.
 
-        mtype           : `string`, optional
-            String that characterize the order merging procedure. It that will
-            be part of the file names.
+        merge_type          : `string`, optional
+            String characterizing the merging procedure. It will be part of
+             the filename.
             Default is ``None``.
 
         Returns
         -------
-        corr_wl         : `numpy.ndarray`
+        corr_wl             : `numpy.ndarray`
             Redial velocity corrected wavelength
     """
     #   Correct wave length data
-    if rv:
-        corr_wl = wl / (np.sqrt((c + rv * 1000) / (c - rv * 1000)))
+    if radial_velocity:
+        corrected_wave_length = wave_length / (np.sqrt(
+            (c + radial_velocity * 1000) / (c - radial_velocity * 1000)
+        ))
     else:
-        corr_wl = wl
+        corrected_wave_length = wave_length
 
     #   Get plot limits -> use line wavelength + a margin of 20AA
-    id_x_min = np.argmin(np.abs(corr_wl - (5889.95 - 20)))
-    id_x_max = np.argmin(np.abs(corr_wl - (5895.92 + 20)))
+    id_x_min = np.argmin(np.abs(corrected_wave_length - (5889.95 - 20)))
+    id_x_max = np.argmin(np.abs(corrected_wave_length - (5895.92 + 20)))
 
     plt.plot(
-        corr_wl[id_x_min:id_x_max],
-        flx[id_x_min:id_x_max],
+        corrected_wave_length[id_x_min:id_x_max],
+        flux[id_x_min:id_x_max],
         label="Measured Flux",
         zorder=5,
         color="navy",
@@ -343,39 +346,42 @@ def correct_for_rv(wl, flx, rv, name_obj, plot=False, mtype=None):
     plt.tight_layout()
     if plot:
         plt.show()
-    if mtype is not None:
-        plt.savefig(f"output/Vicinity_sodium_{name_obj}_{mtype}.pdf")
+    if merge_type is not None:
+        plt.savefig(f"output/Vicinity_sodium_{name_obj}_{merge_type}.pdf")
     else:
         plt.savefig(f"output/Vicinity_sodium_{name_obj}.pdf")
     plt.close()
 
-    return corr_wl
+    return corrected_wave_length
 
 
-def normfunc(p, f1, f2):
+def evaluate_flux_difference(scaling_factor, flux_1, flux_2):
     """
-        Function to minimize flux difference between spectra
-
-        Goal        : Calculate the number of wavelength points for which the
-        ----          flux difference is below a certain threshold, so this can
-                      be maximized.
+        Calculates the number of wavelength points for which the
+        flux difference is below a certain threshold, so this can
+        be maximized by an external function.
 
         Parameters
         ----------
-        p           : `float`
+        scaling_factor  : `float`
             Initial value for the flux scaling between spectra
 
-        f1          : `numpy.ndarray`
+        flux_1          : `numpy.ndarray`
             Flux of spectrum 1
 
-        f2          : `numpy.ndarray`
+        flux_2          : `numpy.ndarray`
             Flux of spectrum 2
+
+        Returns
+        -------
+                        : `float`
+            Inverse of number of flux values below threshold
     """
     #   Set flux threshold
-    limit = np.abs(0.02 * np.nanmedian(f1))
+    limit = np.abs(0.02 * np.nanmedian(flux_1))
 
     #   Calculate points where flux differences is below the threshold
-    good_points = (np.abs(f1 - f2 * p) < limit).sum()
+    good_points = (np.abs(flux_1 - flux_2 * scaling_factor) < limit).sum()
 
     #   Sanitize number of points, since we will return the inverse
     if not good_points:
@@ -384,103 +390,107 @@ def normfunc(p, f1, f2):
     return 1. / good_points
 
 
-def norm_spectrum_interval(wave, flux, median_window, porder):
+def normalize_spectrum_interval(wave_length, flux, median_window,
+                                normalization_order):
     """
         Normalize a spectrum. If the normalization is not sufficient, the
         spectrum will be split in segments and the normalization will
-        be repeated for those segments. The segments will be merged afterwards.
+        be repeated for those segments. The segments will be merged afterward.
 
         Parameters
         ----------
-        wave            : `numpy.ndarray`
+        wave_length         : `numpy.ndarray`
             Array with wavelength data
 
-        flux            : `numpy.ndarray`
+        flux                : `numpy.ndarray`
             Array with flux data
 
-        median_window   : `int`
+        median_window       : `integer`
             Window in Pixel used in median smoothing
 
-        porder          : `integer`
+        normalization_order : `integer`
             Order of the polynomial that is used for normalization
 
         Returns
         -------
-        wave            : `numpy.ndarray`
+        wave_length         : `numpy.ndarray`
             Array with normalized wavelength data
 
-        flux            : `numpy.ndarray`
+        flux                : `numpy.ndarray`
             Array with normalized  flux data
     """
     #   Create Spectrum1D objects
-    spec = Spectrum1D(spectral_axis=wave, flux=flux)
+    spectrum_1d = Spectrum1D(spectral_axis=wave_length, flux=flux)
 
     #   Normalize the merged spectrum
-    spec, std = norm_spectrum(spec, order=porder)
+    spectrum_1d, std = normalize_spectrum(spectrum_1d, normalization_order=normalization_order)
 
     #   Split spectrum in segments, if standard deviation is too high
     if std > 0.05:
-        nsegment = 10
-        nwave = len(wave)
-        step = int(nwave / nsegment)
+        n_segments = 10
+        n_wavelength_points = len(wave_length)
+        step_size = int(n_wavelength_points / n_segments)
         segments = []
 
         #   Loop over segments
         i_old = 0
-        for i in range(step, step * nsegment, step):
+        for i in range(step_size, step_size * n_segments, step_size):
             #   Cut segments and add overlay range to the
             #   segments, so that the normalization afterburner
             #   can take effect
-            overlap = int(step * 0.15)
-            if i == step:
-                flux_seg = flux[i_old:i + overlap]
-                wave_seg = wave[i_old:i + overlap]
-            elif i == nsegment - 1:
-                flux_seg = flux[i_old - overlap:]
-                wave_seg = wave[i_old - overlap:]
+            overlap = int(step_size * 0.15)
+            if i == step_size:
+                flux_segment = flux[i_old:i + overlap]
+                wave_length_segment = wave_length[i_old:i + overlap]
+            elif i == n_segments - 1:
+                flux_segment = flux[i_old - overlap:]
+                wave_length_segment = wave_length[i_old - overlap:]
             else:
-                flux_seg = flux[i_old - overlap:i + overlap]
-                wave_seg = wave[i_old - overlap:i + overlap]
+                flux_segment = flux[i_old - overlap:i + overlap]
+                wave_length_segment = wave_length[i_old - overlap:i + overlap]
             i_old = i
 
             #   Create Spectrum1D objects for the segments
-            segments.append(Spectrum1D(spectral_axis=wave_seg, flux=flux_seg))
+            segments.append(Spectrum1D(
+                spectral_axis=wave_length_segment,
+                flux=flux_segment,
+            ))
 
         #   Normalize & merge spectra
-        wave, flux = norm_merge_spectra(
+        wave_length, flux = normalize_and_merge_spectra(
             segments,
             median_window=median_window,
-            order=porder,
+            normalization_order=normalization_order,
         )
 
-    return wave, flux
+    return wave_length, flux
 
 
-def norm_spectrum(spec, median_window=61, order=9):
+def normalize_spectrum(spectrum_1d, median_window=61, normalization_order=9):
     """
         Normalize a spectrum
 
         Parameters
         ----------
-        spec            : `specutils.Spectrum1D`
+        spectrum_1d             : `specutils.Spectrum1D`
             Spectrum to normalize
 
-        median_window   : `int`, optional
+        median_window           : `int`, optional
             Window in Pixel used in median smoothing
             Default is ``61``.
 
-        order           : `int`, optional
+        normalization_order     : `int`, optional
             Order of the polynomial used to find the continuum
             Default is ``9``.
 
         Returns
         -------
-        norm_spec       : `specutils.Spectrum1D`
+        normalized_spectrum_1d  : `specutils.Spectrum1D`
             Normalized spectrum
     """
     #   Regions that should not be used for continuum estimation,
     #   such as broad atmospheric absorption bands
-    exclude_regions = [
+    excluded_regions = [
         SpectralRegion(4295. * u.AA, 4315. * u.AA),
         # SpectralRegion(6860.* u.AA, 6880.* u.AA),
         SpectralRegion(6860. * u.AA, 6910. * u.AA),
@@ -499,20 +509,20 @@ def norm_spectrum(spec, median_window=61, order=9):
     #   -> will be two for late type stars because of the many absorption lines
     #   -> to limit execution time use simple LinearLSQFitter()
     #       -> reduces normalization accuracy
-    _cont = fit_generic_continuum(
-        spec,
-        model=models.Chebyshev1D(order),
+    _continuum = fit_generic_continuum(
+        spectrum_1d,
+        model=models.Chebyshev1D(normalization_order),
         fitter=fitting.LinearLSQFitter(),
         median_window=median_window,
-        exclude_regions=exclude_regions,
-    )(spec.spectral_axis)
+        exclude_regions=excluded_regions,
+    )(spectrum_1d.spectral_axis)
 
     #   Normalize spectrum
-    norm_spec = spec / _cont
+    normalized_spectrum_1d = spectrum_1d / _continuum
 
     #   Sigma clip the normalized spectrum to rm spectral lines
-    clip_flux = sigma_clip(
-        norm_spec.flux.value,
+    clipped_flux = sigma_clip(
+        normalized_spectrum_1d.flux.value,
         sigma_lower=1.25,
         sigma_upper=3.,
         # sigma_upper=4.,
@@ -521,131 +531,131 @@ def norm_spectrum(spec, median_window=61, order=9):
     )
 
     #   Calculate mask
-    mask = np.invert(clip_flux.recordmask)
+    mask = np.invert(clipped_flux.recordmask)
 
     #   Make new spectrum
-    spec_mask = Spectrum1D(
-        spectral_axis=spec.spectral_axis[mask],
-        flux=spec.flux[mask],
+    masked_spectrum_1d = Spectrum1D(
+        spectral_axis=spectrum_1d.spectral_axis[mask],
+        flux=spectrum_1d.flux[mask],
     )
 
     # Determine new continuum
-    _cont = fit_generic_continuum(
-        spec_mask,
-        model=models.Chebyshev1D(order),
+    _continuum = fit_generic_continuum(
+        masked_spectrum_1d,
+        model=models.Chebyshev1D(normalization_order),
         fitter=fitting.LinearLSQFitter(),
         median_window=median_window,
-        exclude_regions=exclude_regions,
-    )(spec.spectral_axis)
+        exclude_regions=excluded_regions,
+    )(spectrum_1d.spectral_axis)
 
     #   Normalize spectrum again
-    norm_spec = spec / _cont
+    normalized_spectrum_1d = spectrum_1d / _continuum
 
-    return norm_spec, mad_std(norm_spec.flux)
+    return normalized_spectrum_1d, mad_std(normalized_spectrum_1d.flux)
 
 
-def norm_merge_spectra(spectra, median_window=61, order=9):
+def normalize_and_merge_spectra(spectra_list, median_window=61, normalization_order=9):
     """
-        Normalize spectra and merge them afterwards
+        Normalize spectra and merge them afterward
 
         Parameters
         ----------
-        spectra         : `list` of `specutils.Spectrum1D`
+        spectra_list        : `list` of `specutils.Spectrum1D`
             Spectra to normalize and merge
 
-        median_window   : `int`, optional
+        median_window       : `int`, optional
             Window in Pixel used in median smoothing
             Default is ``61``.
 
-        order           : `int`, optional
+        normalization_order : `int`, optional
             Polynomial order used for normalization
             Default is ``9``.
 
         Returns
         -------
-                        :
+                            : `list` of `specutils.Spectrum1D`
             Normalized and merged spectrum
     """
     #   Normalize spectra
-    norm_spec = []
-    for spec in spectra:
-        norm_spec.append(
-            norm_spectrum(
+    normalized_spectra_list = []
+    for spec in spectra_list:
+        normalized_spectra_list.append(
+            normalize_spectrum(
                 spec,
                 median_window=median_window,
-                order=order
+                normalization_order=normalization_order
             )[0]
         )
 
     #   Merge spectra
-    return merge_norm(norm_spec)
+    return merge_normalized_spectra(normalized_spectra_list)
 
 
-def merge_norm(spec_list):
+def merge_normalized_spectra(spectra_list):
     """
         Merge normalized spectra
 
         Parameters
         ----------
-        spec_list       : `list` of `specutils.Spectrum1D`
+        spectra_list            : `list` of `specutils.Spectrum1D`
             List with normalized spectra
 
         Returns
         -------
-        mwave           : `list` of `float`
+        resampled_wavelength    : `list` of `float`
             Common wave length scale
 
-        mflux          : `list` of `float`
+        median_merged_flux      : `list` of `float`
             Merged flux data
 
     """
     #   Extract wavelength and flux data
-    wave = []
+    wave_length = []
     flux = []
-    for spec in spec_list:
-        wave.append(spec.spectral_axis)
+    for spec in spectra_list:
+        wave_length.append(spec.spectral_axis)
         flux.append(spec.flux)
 
     #   Build common wave length scale
-    mwave = np.sort(np.concatenate(wave))
+    resampled_wavelength = np.sort(np.concatenate(wave_length))
 
     #   Prepare list for flux
-    flux_new = []
+    resampled_flux = []
 
     #   Get flux unit
-    flux_u = flux[0].unit
+    flux_unit = flux[0].unit
 
     #   Loop over all spectra
-    for i, w in enumerate(wave):
+    for i, wave_length_element in enumerate(wave_length):
         #   Remove wavelength duplicates from the input arrays
-        _u, indices = np.unique(w, return_index=True)
-        w = w[indices]
+        _, indices = np.unique(wave_length_element, return_index=True)
+        wave_length_element = wave_length_element[indices]
         flux[i] = flux[i][indices]
 
         #   Interpolate flux on new wavelength grid
-        f = interpolate.interp1d(
-            w,
+        interpolation_object = interpolate.interp1d(
+            wave_length_element,
             flux[i],
             kind='cubic',
             bounds_error=False,
         )
-        flux_new.append(f(mwave))
+        resampled_flux.append(interpolation_object(resampled_wavelength))
 
     #   Normalization afterburner
     #   -> attempts to improve normalization in the overlap regions
-    flux_new = after_norm(flux_new)
+    resampled_flux = normalization_afterburner(resampled_flux)
 
     #   Merge flux
-    mflux = np.nanmedian(flux_new, axis=0)
+    median_merged_flux = np.nanmedian(resampled_flux, axis=0)
 
-    return mwave, mflux * flux_u
+    return resampled_wavelength, median_merged_flux * flux_unit
 
 
-def after_norm(flux_list):
+def normalization_afterburner(flux_list):
     """
         Afterburner that attempts to correct spectra (especially echelle
         orders) that are not well normalized before merging.
-            -> only works if there in an overlap region
+            -> only works if there is an overlap region
             -> assumes that there are only two spectra/orders that overlap
             -> assumes that one of the spectra is well normalized
 
@@ -662,54 +672,62 @@ def after_norm(flux_list):
 
     for i in range(1, len(flux_list)):
         #   Calculate flux difference
-        f_diff = flux_list[i - 1] - flux_list[i]
+        flux_difference = flux_list[i - 1] - flux_list[i]
 
         #   Check if overlap region exists
-        #   -> if not do nothing
-        if ~np.all(np.isnan(f_diff)):
+        #   -> if not, do nothing
+        if ~np.all(np.isnan(flux_difference)):
             #   Determine where flux is negative
-            lower = np.argwhere(f_diff < -0.01)
+            negative_flux_difference_bins = np.argwhere(
+                flux_difference < -0.01
+            )
 
             #   Find consecutive elements -> build groups
-            group_lower = consecutive(lower.flatten())
+            negative_flux_difference_ranges = consecutive(
+                negative_flux_difference_bins.flatten()
+            )
 
-            #   Loop over groups
-            for low in group_lower:
+            #   Loop over negative groups
+            for negative_difference in negative_flux_difference_ranges:
                 #   Restrict to groups with more than 5 elements
-                if len(low) > 5:
+                if len(negative_difference) > 5:
                     #   Check if flux of the first spectrum
                     #   is negative in this area
                     #   -> if yes replace
                     #   -> otherwise replace flux in the second spectrum
-                    if np.nanmedian(flux_list[i - 1][low] - 1) < -0.05:
-                        flux_list[i - 1][low] = flux_list[i][low]
+                    if (np.nanmedian(flux_list[i - 1][negative_difference] - 1)
+                            < -0.05):
+                        flux_list[i - 1][negative_difference] = flux_list[i][negative_difference]
                     else:
-                        flux_list[i][low] = flux_list[i - 1][low]
+                        flux_list[i][negative_difference] = flux_list[i - 1][negative_difference]
 
             #   Determine where flux is positive
-            higher = np.argwhere(f_diff > 0.01)
+            positive_flux_difference_bins = np.argwhere(flux_difference > 0.01)
 
             #   Find consecutive elements -> build groups
-            group_higher = consecutive(higher.flatten())
+            positive_flux_difference_ranges = consecutive(
+                positive_flux_difference_bins.flatten()
+            )
 
-            #   Loop over groups
-            for high in group_higher:
+            #   Loop over positive groups
+            for positive_difference in positive_flux_difference_ranges:
                 #   Restrict to groups with more than 5 elements
-                if len(high) > 5:
+                if len(positive_difference) > 5:
                     #   Check if flux of the second spectrum
                     #   is negative in this area
                     #   -> if yes replace
                     #   -> otherwise replace flux in the first spectrum
-                    if np.nanmedian(flux_list[i][high] - 1) < -0.05:
-                        flux_list[i][high] = flux_list[i - 1][high]
+                    if (np.nanmedian(flux_list[i][positive_difference] - 1)
+                            < -0.05):
+                        flux_list[i][positive_difference] = flux_list[i - 1][positive_difference]
                     else:
-                        flux_list[i - 1][high] = flux_list[i][high]
+                        flux_list[i - 1][positive_difference] = flux_list[i][positive_difference]
 
     return flux_list
 
 
-def merge_spectra_intersec(flux_1, flux_2, debug_plot=False, wave=None,
-                           i=None):
+def adjust_intersected_spectra(flux_1, flux_2, debug_plot=False, wave_length=None,
+                               id_intersection=None):
     """
         Combines two spectra whose flux intersects
 
@@ -718,94 +736,123 @@ def merge_spectra_intersec(flux_1, flux_2, debug_plot=False, wave=None,
 
         Parameters
         ----------
-        flux_1      : `numpy.ndarray`
+        flux_1          : `numpy.ndarray`
             Flux of the first spectrum
 
-        flux_2      : `numpy.ndarray`
+        flux_2          : `numpy.ndarray`
             Flux of the second spectrum
 
-        debug_plot  : `boolean`, optional
-            If ``True`` a the intersection range will be marked on the
+        debug_plot      : `boolean`, optional
+            If ``True`` the intersection range will be marked on the
             debug plot
             Default is ``False``.
 
-        wave        : `numpy.ndarray`, optional
+        wave_length     : `numpy.ndarray`, optional
             Wavelength array
             Default is ``None``.
 
-        i           : `integer`, optional
+        id_intersection : `integer`, optional
             ID of the current "intersection"
             Default is ``None``.
 
         Returns
         -------
-        flux_1      : `numpy.ndarray`
+        flux_1          : `numpy.ndarray`
             Modified flux of the first spectrum
 
-        flux_2      : `numpy.ndarray`
+        flux_2          : `numpy.ndarray`
             Modified flux of the second spectrum
     """
     #   Calculate flux difference
-    f_diff = flux_1 - flux_2
+    flux_difference = flux_1 - flux_2
 
     #   Check if overlap exists?
-    if ~np.all(np.isnan(f_diff)):
+    if ~np.all(np.isnan(flux_difference)):
         #   Calculate range where the flux difference < 10% of maximum of
         #   the flux difference to identify the range where flux intersects
-        id_f_x = np.argwhere(
-            np.absolute(f_diff) / np.nanmax(np.absolute(f_diff)) <= 0.1
+        absolute_flux_difference = np.absolute(flux_difference)
+        ids_overlap_region = np.argwhere(
+            absolute_flux_difference / np.nanmax(absolute_flux_difference) <= 0.1
         )
 
         #   Return is no intersection was identified
-        if len(id_f_x) == 0:
+        if len(ids_overlap_region) == 0:
             return flux_1, flux_2
 
-        #   Find center of id_f_x
-        len_f_x = len(id_f_x)
-        id_f_x = id_f_x[int(len_f_x / 2)][0]
+        #   Find and restrict to center of intersection region
+        length_overlap_region = len(ids_overlap_region)
+        center_overlap_region = ids_overlap_region[
+            int(length_overlap_region / 2.)
+        ][0]
 
-        #   Median flux around 10% of id_f_x
+        #   Median flux around 10% of intersection region
         #   (plus 1 to ensure that range is not 0)
-        x_len = int(len_f_x * 0.05) + 1
-        flux_x = np.median(flux_1[id_f_x - x_len:id_f_x + x_len])
-        if flux_x == 0.:
-            flux_x = 1.
+        intersection_region = int(length_overlap_region * 0.05) + 1
+        intersection_region_start = center_overlap_region - intersection_region
+        intersection_region_end = center_overlap_region + intersection_region
+        median_flux_1_intersection_region = np.median(
+            flux_1[intersection_region_start:intersection_region_end]
+        )
+        if median_flux_1_intersection_region == 0.:
+            median_flux_1_intersection_region = 1.
 
         #   Cut flux range to the overlap range
-        f_diff_cut = f_diff[~np.isnan(f_diff)]
+        flux_difference_overlap = flux_difference[~np.isnan(flux_difference)]
 
         #   First and last flux point
-        f_diff_s = f_diff_cut[0]
-        f_diff_e = f_diff_cut[-1]
+        start_value_flux_difference_overlap = flux_difference_overlap[0]
+        end_value_flux_difference_overlap = flux_difference_overlap[-1]
 
         #   Find index of the above
-        id_f_s = np.nanargmin(np.absolute(f_diff - f_diff_s))
-        id_f_e = np.nanargmin(np.absolute(f_diff - f_diff_e))
+        id_start_overlap = np.nanargmin(
+            np.absolute(flux_difference - start_value_flux_difference_overlap)
+        )
+        id_end_overlap = np.nanargmin(
+            np.absolute(flux_difference - end_value_flux_difference_overlap)
+        )
 
         #   Plot markers for overlapping region
         if debug_plot:
             plt.plot(
-                [wave[id_f_s].value, wave[id_f_s].value],
-                [0.9 * flux_1[id_f_s], 1.1 * flux_1[id_f_s]],
+                [
+                    wave_length[id_start_overlap].value,
+                    wave_length[id_start_overlap].value
+                ],
+                [
+                    0.9 * flux_1[id_start_overlap],
+                    1.1 * flux_1[id_start_overlap]
+                ],
                 color='b',
                 linestyle='--',
             )
             plt.plot(
-                [wave[id_f_e].value, wave[id_f_e].value],
-                [0.9 * flux_1[id_f_e], 1.1 * flux_1[id_f_e]],
+                [
+                    wave_length[id_end_overlap].value,
+                    wave_length[id_end_overlap].value
+                ],
+                [
+                    0.9 * flux_1[id_end_overlap],
+                    1.1 * flux_1[id_end_overlap]
+                ],
                 color='b',
                 linestyle='--',
             )
             plt.plot(
-                [wave[id_f_x].value, wave[id_f_x].value],
-                [0.9 * flux_1[id_f_x], 1.1 * flux_1[id_f_x]],
+                [
+                    wave_length[center_overlap_region].value,
+                    wave_length[center_overlap_region].value
+                ],
+                [
+                    0.9 * flux_1[center_overlap_region],
+                    1.1 * flux_1[center_overlap_region]
+                ],
                 color='r',
                 linestyle='--',
             )
             plt.text(
-                wave[id_f_x].value,
-                1.2 * flux_1[id_f_x],
-                ' ' + str(i) + ' ',
+                wave_length[center_overlap_region].value,
+                1.2 * flux_1[center_overlap_region],
+                ' ' + str(id_intersection) + ' ',
                 # rotation=90,
                 ha='center',
                 va='top',
@@ -813,474 +860,496 @@ def merge_spectra_intersec(flux_1, flux_2, debug_plot=False, wave=None,
             )
 
         #   Calculate 3% of the length of the overlap range
-        three_diff = int(len(f_diff_cut) * 0.03)
+        overlap_range_3_percent = int(len(flux_difference_overlap) * 0.03)
 
         #   Ensure that the above is at least 1
-        if three_diff == 0:
-            three_diff = 1
+        if overlap_range_3_percent == 0:
+            overlap_range_3_percent = 1
 
         #   Median flux of the first and last 3% in terms of bins
-        f_diff_s_med = np.median(f_diff_cut[0:three_diff])
-        f_diff_e_med = np.median(f_diff_cut[three_diff * -1:])
+        median_flux_difference_overlap_start = np.median(
+            flux_difference_overlap[0:overlap_range_3_percent]
+        )
+        median_flux_difference_overlap_end = np.median(
+            flux_difference_overlap[overlap_range_3_percent * -1:]
+        )
 
-        #   Check if flux difference stars negative and ends positive
-        #   and is grater than 3% of the median flux
-        #   -> if yes, use flux of the other in the respective area
-        # if (f_diff_s_med / flux_x < -0.03 and f_diff_e_med / flux_x > 0.03 or
-        # f_diff_s_med / flux_x > 0.03 and f_diff_e_med / flux_x < -0.03):
-        # flux_2[id_f_s:id_f_x] = flux_1[id_f_s:id_f_x]
-        # flux_1[id_f_x:id_f_e] = flux_2[id_f_x:id_f_e]
-
-        #   If the flux difference is larger than 3% at one edge, remove
-        #   the overlapping flux ranges, since the following merging process
-        #   would in this case lead to jumps in the merged spectrum
-        # if (np.abs(f_diff_s_med / flux_x) < 0.3 or np.abs(f_diff_e_med / flux_x) < 0.3):
-        if (np.abs(f_diff_s_med / flux_x) > 0.03 or
-                np.abs(f_diff_e_med / flux_x) > 0.03):
-            flux_2[id_f_s:id_f_x] = np.nan
-            flux_1[id_f_x:id_f_e] = np.nan
+        #   If the flux difference is larger than 3% at one edge of the overlap
+        #   region, remove the overlapping flux ranges, since the following
+        #   merging process would in this case lead to jumps in the merged spectrum
+        first_edge_evaluation = np.abs(
+            median_flux_difference_overlap_start / median_flux_1_intersection_region
+        )
+        second_edge_evaluation = np.abs(
+            median_flux_difference_overlap_end / median_flux_1_intersection_region
+        )
+        if first_edge_evaluation > 0.03 or second_edge_evaluation > 0.03:
+            flux_2[id_start_overlap:center_overlap_region] = np.nan
+            flux_1[center_overlap_region:id_end_overlap] = np.nan
 
     return flux_1, flux_2
 
 
-def norm_two_spectra(flux_1, flux_2, p0):
+def match_two_spectra(flux_1, flux_2, initial_normalization_factor):
     """
         Normalize and adjust flux of two spectra
 
         Parameters
         ----------
-        flux_1          : `numpy.ndarray`
+        flux_1                          : `numpy.ndarray`
             Flux of first spectrum
 
-        flux_2          : `numpy.ndarray`
+        flux_2                          : `numpy.ndarray`
             Flux of second spectrum
 
-        p0              : `float`
-            Initial value for the minimization algorithm used to estimated
+        initial_normalization_factor    : `float`
+            Initial value for the minimization algorithm used to estimate
             the flux difference between `flux_1` and `flux_2`. Usually the
             normalization factor of previous iteration/order
 
         Returns
         -------
-
-                        : `numpy.ndarray`
+                                        : `numpy.ndarray`
             Flux of second spectrum (`flux_2`) scaled to the first
             one (`flux_1`)
 
-                        : `float`
+        norm_factor                     : `float`
             Scaling factor of `flux_2`
 
-        Idea            : https://stackoverflow.com/questions/13846213/create-composite-spectrum-from-two-unnormalized-spectra
-        ----
+        Idea: https://stackoverflow.com/questions/13846213/create-composite-spectrum-from-two-unnormalized-spectra
     """
 
     #   Calculate normalization factor between `flux_1` and `flux_2`, using
-    #   scipy.optimize and a normalization function `normfunc`
-    min_fit = optimize.basinhopping(
-        # min_fit = optimize.minimize_scalar(
-        normfunc,
-        p0,
+    #   scipy.optimize and a normalization function `evaluate_flux_difference`
+    optimization_result = optimize.basinhopping(
+        evaluate_flux_difference,
+        initial_normalization_factor,
         1000,
-        # args=(flux_1, flux_2),
         minimizer_kwargs={'args': (flux_1, flux_2)}
         # )
     )
     #   If the minimization algorithm fails, use the normalization factor of
     #   previous order
-    if min_fit.success:
-        norm_factor = min_fit.x
+    if optimization_result.success:
+        norm_factor = optimization_result.x
     else:
-        norm_factor = p0
+        norm_factor = initial_normalization_factor
 
     #   Adjust flux and return
     return flux_2 * norm_factor, norm_factor
 
 
-def merge_spectra(wave, flux, trim_value=400, debug_plot=False):
+def merge_spectra(wave_length, flux, trim_value_start_order=400,
+                  debug_plot=False):
     """
         Resample spectra on a common wavelength scale and merge those
 
         Parameters
         ----------
-        wave            : `list` of `numpy.ndarray`'s
+        wave_length             : `list` of `numpy.ndarray`'s
             List of the wavelength ranges
 
-        flux            : `list` of `numpy.ndarray`'s
+        flux                    : `list` of `numpy.ndarray`'s
             List of the flux ranges corresponding to the wavelength ranges
             in `wave` that should be merged
 
-        trim_value      : `integer`, optional
+        trim_value_start_order  : `integer`, optional
             The number of wavelength bins that should be removed from the start
             of the orders.
             Default is ``400``.
 
-        debug_plot  : `boolean`, optional
-            If ``True`` a the intersection range will be marked on the
+        debug_plot              : `boolean`, optional
+            If ``True`` the intersection range will be marked on the
             debug plot
             Default is ``False``.
 
         Returns
         -------
-                        : `numpy.ndarray`
+                                : `numpy.ndarray`
             The resampled wavelength scale and the merged flux
 
-                        : `numpy.ndarray`
+                                : `numpy.ndarray`
             The resampled and merged flux
     """
     #   Build common wavelength scale
-    new_wave = np.unique(np.sort(np.concatenate(wave)))
+    resampled_wavelength = np.unique(np.sort(np.concatenate(wave_length)))
 
     #   Prepare list for flux
-    flux_new = []
+    resampled_flux = []
 
-    #   Initial normalization value
-    p0 = 1.
+    #   Initial normalization factor
+    initial_normalization_factor = 1.
 
     #   Get flux unit
-    flux_u = flux[0].unit
+    flux_unit = flux[0].unit
 
     print(f"{Bcolors.BOLD}   Match order fluxes ...{Bcolors.ENDC}")
-    for i, w in enumerate(wave):
+    for i, wave in enumerate(wave_length):
         #   Calculate positions where flux is 0. and rm those
-        ind = np.argwhere(flux[i] == 0.)
+        index_null_flux = np.argwhere(flux[i] == 0.)
 
-        wave_clean = np.delete(w, ind)
-        flux_clean = np.delete(flux[i], ind)
+        wave_cleaned = np.delete(wave, index_null_flux)
+        flux_cleaned = np.delete(flux[i], index_null_flux)
 
         #   Trim start of the spectral ranges to improve normalization
         #   This proves to be useful in some cases and does not do harm in
         #   the other.
         if i == 0:
-            wave_clean = wave_clean[600:]
-            flux_clean = flux_clean[600:]
+            wave_cleaned = wave_cleaned[600:]
+            flux_cleaned = flux_cleaned[600:]
         if i > 0:
-            wave_clean = wave_clean[trim_value:]
-            flux_clean = flux_clean[trim_value:]
+            wave_cleaned = wave_cleaned[trim_value_start_order:]
+            flux_cleaned = flux_cleaned[trim_value_start_order:]
 
         #   Interpolate flux on common wavelength scale
-        f = interpolate.interp1d(
-            wave_clean,
-            flux_clean,
+        interpolation_object = interpolate.interp1d(
+            wave_cleaned,
+            flux_cleaned,
             kind='cubic',
             bounds_error=False,
         )
-        flux_new.append(f(new_wave))
+        resampled_flux.append(interpolation_object(resampled_wavelength))
 
         if i > 0:
             print(f"   Adjust flux of order {i} to {i + 1}\r", end="")
             #   Adjust flux of the individual spectra
-            flux_new[i], p0 = norm_two_spectra(
-                flux_new[i - 1],
-                flux_new[i],
-                p0,
+            resampled_flux[i], initial_normalization_factor = match_two_spectra(
+                resampled_flux[i - 1],
+                resampled_flux[i],
+                initial_normalization_factor,
             )
         if debug_plot:
-            plt.step(new_wave, flux_new[i])
+            plt.step(resampled_wavelength, resampled_flux[i])
 
     #   Improve overlapping edges before merging
-    for i, w in enumerate(wave):
+    for i, wave in enumerate(wave_length):
         if i > 0:
             print(
                 f"   Improve overlapping edges for order {i} and {i + 1}\r",
                 end=""
             )
             #   Manipulate spectra if they "intersect"
-            flux_new[i - 1], flux_new[i] = merge_spectra_intersec(
-                flux_new[i - 1],
-                flux_new[i],
+            resampled_flux[i - 1], resampled_flux[i] = adjust_intersected_spectra(
+                resampled_flux[i - 1],
+                resampled_flux[i],
                 debug_plot=debug_plot,
-                wave=new_wave,
-                i=i,
+                wave_length=resampled_wavelength,
+                id_intersection=i,
             )
     print("                                                        \r", end="")
 
     #   Merge flux and remove residuals NANS
     print(f"{Bcolors.BOLD}   Merge orders... {Bcolors.ENDC}")
-    mflux = np.nanmedian(flux_new, axis=0)
-    ind = np.argwhere(np.isnan(mflux))
+    median_merged_flux = np.nanmedian(resampled_flux, axis=0)
+    index_nan_flux = np.argwhere(np.isnan(median_merged_flux))
 
-    return np.delete(new_wave, ind), np.delete(mflux, ind) * flux_u
+    return (np.delete(resampled_wavelength, index_nan_flux),
+            np.delete(median_merged_flux, index_nan_flux) * flux_unit)
 
 
-def normalize_spectrum_fabian(wl, flx, name="", cutlines=[], cutlim=[]):
+def normalize_spectrum_fabian(wave_length, flux, object_name="",
+                              lines_to_skip=None,
+                              range_to_skip_around_lines_to_skip=None):
     """
         Normalize a spectrum to its continuum
 
         Parameters
         ----------
-        wl              : `numpy.ndarray`
+        wave_length                         : `numpy.ndarray`
             Wavelength data
 
-        flx             : `numpy.ndarray`
+        flux                                : `numpy.ndarray`
             Flux data
 
-        name            : `string`, optional
+        object_name                         : `string`, optional
             Name of the object
             Default is an empty string.
 
-        cutlines        : `list`, optional
+        lines_to_skip                       : `list` or None, optional
             Line wavelength that should be skipped during continuum
             determination
-            Default is an empty list.
+            Default is ``None``.
 
-        cutlim          : `list`, optional
+        range_to_skip_around_lines_to_skip  : `list` or `None`, optional
             Wavelength limits that should be applied around each line that
             should be skipped
-            Default is an empty list.
+            Default is ``None``.
 
         Returns
         -------
-        n_flx           : `numpy.ndarray`
+        normalized_flux                     : `numpy.ndarray`
             Normalized flux data
 
-        cont            : `numpy.ndarray`
+        continuum                           : `numpy.ndarray`
             Continuum data points
     """
+    #   Sanitize variables
+    if lines_to_skip is None:
+        lines_to_skip = []
+    if range_to_skip_around_lines_to_skip is None:
+        range_to_skip_around_lines_to_skip = []
+
     #   Calculate median of the step size between wavelength points
-    wl_step = np.median(np.diff(wl))
+    wave_length_step = np.median(np.diff(wave_length))
 
-    med_win_size = 0.5
-    max_win_size = 12
+    medium_window_size = 0.5
+    max_window_size = 12
     #   Calculate number of elements in the maximum and median window
-    true_med_size = math.floor(med_win_size / wl_step)
-    true_max_size = math.floor(max_win_size / wl_step)
+    elements_in_medium_window = math.floor(
+        medium_window_size / wave_length_step
+    )
+    elements_in_max_window = math.floor(max_window_size / wave_length_step)
 
-    if true_max_size == 0 or true_med_size == 0:
+    if elements_in_max_window == 0 or elements_in_medium_window == 0:
         raise ValueError(
             "Medium/Maximum window sizes need to be bigger than a "
             "wavelength step!"
         )
 
     #   Apply median and maximum filter with the corresponding window sizes
-    flx_for_interpol = median_filter(flx, size=true_med_size)
-    flx_for_interpol = maximum_filter(flx_for_interpol, size=true_max_size)
+    flux_for_interpolation = median_filter(
+        flux,
+        size=elements_in_medium_window,
+    )
+    flux_for_interpolation = maximum_filter(
+        flux_for_interpolation,
+        size=elements_in_max_window,
+    )
 
     #   Cut spectral lines that would spoil the continuum fit such as broad
     #   hydrogen lines
-    cutmask = np.ones(np.shape(wl), dtype=bool)
-    for i, l in enumerate(cutlines):
-        line_mask = np.logical_or(wl > l + cutlim[i], wl < l - cutlim[i])
-        cutmask = np.logical_and(cutmask, line_mask)
+    spectral_lines_mask = np.ones(np.shape(wave_length), dtype=bool)
+    for i, line_wave_length in enumerate(lines_to_skip):
+        line_mask = np.logical_or(
+            wave_length > line_wave_length + range_to_skip_around_lines_to_skip[i],
+            wave_length < line_wave_length - range_to_skip_around_lines_to_skip[i]
+        )
+        spectral_lines_mask = np.logical_and(
+            spectral_lines_mask,
+            line_mask
+        )
 
-    flx_for_interpol = flx_for_interpol[cutmask]
-    wl_for_interpol = wl[cutmask]
+    flux_for_interpolation = flux_for_interpolation[spectral_lines_mask]
+    wave_length_for_interpol = wave_length[spectral_lines_mask]
 
     #   Interpolate to find the continuum
-    norm_fit = InterpolatedUnivariateSpline(
-        wl_for_interpol,
-        flx_for_interpol,
+    continuum_fit = InterpolatedUnivariateSpline(
+        wave_length_for_interpol,
+        flux_for_interpolation,
         k=2,
     )
 
     #   Normalize spectrum
-    cont = norm_fit(wl)
-    n_flx = flx / cont
+    continuum = continuum_fit(wave_length)
+    normalized_flux = flux / continuum
 
-    if name != "":
+    if object_name != "":
         np.savetxt(
-            f"flux_normalized_{name}.csv",
-            np.transpose((wl, n_flx)),
+            f"flux_normalized_{object_name}.csv",
+            np.transpose((wave_length, normalized_flux)),
             delimiter=",",
         )
 
-    return n_flx, cont
+    return normalized_flux, continuum
 
 
-def read_baches(File_orders):
+def read_baches(file_name):
     """
         Read baches FITS files with individual orders created by MIDAS
 
         Parameters
         ----------
-        File_orders        : `string`
+        file_name           : `string`
             Name of the file to read
 
         Returns
         -------
-        wave_list       : `list of `numpy.ndarray`
+        wave_length_list    : `list of `numpy.ndarray`
             List with the wavelength data of the individual orders
 
-        flux_list       : `list of `numpy.ndarray`
+        flux_list           : `list of `numpy.ndarray`
             List with the flux data of the individual orders
     """
-    File = fits.open(File_orders)
-    FileData = File[0].data
+    file = fits.open(file_name)
+    file_data = file[0].data
 
-    FileHeader = File[0].header
-    History = FileHeader['HISTORY']
+    file_header = file[0].header
+    history = file_header['HISTORY']
     # ref_pixel        = FileHeader['CRPIX1']
     # coord_ref_pixel  = FileHeader['CRVAL1']
-    wave_per_pixel = FileHeader['CDELT1']
+    wave_per_pixel = file_header['CDELT1']
 
-    #   Extract startpoints from HISTORY section of the FITS Header
+    #   Extract start points from HISTORY section of the FITS Header
     k = 1
-    startpoints = []
-    for line in History:
-        liste = line.split()
-        if not liste:
+    start_points = []
+    for line in history:
+        line_list = line.split()
+        if not line_list:
             k = 1
             continue
         if k == 0:
-            startpoints = startpoints + liste
+            start_points = start_points + line_list
         if k == 1:
-            if 'WSTART' not in liste[0]:
+            if 'WSTART' not in line_list[0]:
                 continue
             else:
                 k = 0
-    startpoints = np.array(startpoints, dtype=float)
+    start_points = np.array(start_points, dtype=float)
 
     #   Convert fluxes to numpy array and calculate wavelength points for
     #   all flux values
-    fluxes = np.array(FileData, dtype=float)
-    waves = np.ones(fluxes.shape) * np.arange(0, fluxes.shape[1]) * wave_per_pixel
-    waves = waves + startpoints.reshape(startpoints.size, 1)
+    flux_array = np.array(file_data, dtype=float)
+    wave_length = (np.ones(flux_array.shape) *
+                   np.arange(0, flux_array.shape[1]) * wave_per_pixel)
+    wave_length = wave_length + start_points.reshape(start_points.size, 1)
 
     #   Limit to flux values != 0
-    wave_list = []
+    wave_length_list = []
     flux_list = []
-    for i, flux in enumerate(fluxes):
-        mask_id = np.nonzero(flux)
-        wave_list.append(waves[i, mask_id][0] * u.AA)
-        flux_list.append(flux[mask_id] * u.adu)
+    for i, flux in enumerate(flux_array):
+        mask_zero_flux = np.nonzero(flux)
+        wave_length_list.append(wave_length[i, mask_zero_flux][0] * u.AA)
+        flux_list.append(flux[mask_zero_flux] * u.adu)
 
-    return wave_list, flux_list
+    return wave_length_list, flux_list
 
 
-def read_baches_merged(File_orders):
+def read_baches_merged(file_name):
     """
         Read baches FITS file with spectrum merged by MIDAS
 
         Parameters
         ----------
-        File_orders        : `string`
+        file_name           : `string`
             Name of the file to read
 
         Returns
         -------
-        wave_merged     : `numpy.ndarray`
+        wave_length_merged  : `numpy.ndarray`
             Wavelength data of the spectrum merged by MIDAS
 
-        flux_merged     : `numpy.ndarray`
+        flux_merged         : `numpy.ndarray`
             Flux data of the spectrum merged by MIDAS
     """
-    File_merged = fits.open(File_orders)
-    FileData_merged = File_merged[0].data
+    file_merged = fits.open(file_name)
+    file_data_merged = file_merged[0].data
 
-    FileHeader_merged = File_merged[0].header
+    file_header_merged = file_merged[0].header
     # ref_pixel_merged       = FileHeader_merged['CRPIX1']
-    coord_ref_pixel_merged = FileHeader_merged['CRVAL1']
-    wave_per_pixel_merged = FileHeader_merged['CDELT1']
+    reference_pixel_merged = file_header_merged['CRVAL1']
+    wave_per_pixel_merged = file_header_merged['CDELT1']
 
     #   Number of lines in the file
-    FileDataLines_merged = len(FileData_merged)
-    N2 = FileDataLines_merged
+    file_data_lines_merged = len(file_data_merged)
 
-    wave_merged = []
-    for i in range(0, FileDataLines_merged):
-        wave_merged.append(coord_ref_pixel_merged + i * wave_per_pixel_merged)
+    wave_length_merged = []
+    for i in range(0, file_data_lines_merged):
+        wave_length_merged.append(
+            reference_pixel_merged + i * wave_per_pixel_merged
+        )
 
-    scut = 200
-    ecut = 200
-    wave_merged = wave_merged[scut:-ecut]
-    flux_merged = FileData_merged[scut:-ecut]
+    start_cut = 200
+    end_cut = 200
+    wave_length_merged = wave_length_merged[start_cut:-end_cut]
+    flux_merged = file_data_merged[start_cut:-end_cut]
 
-    return wave_merged * u.AA, flux_merged * u.adu
+    return wave_length_merged * u.AA, flux_merged * u.adu
 
 
-def check_file_name(File):
+def check_file_name(file_name):
     """
         Check that the file has the correct ending
 
         Parameters
         ----------
-        File            : `string`
+        file_name            : `string`
             Path to the file
 
         Returns
         -------
-        File            : `string`
+        file_name            : `string`
             Modified path to the file
     """
-    if os.path.isfile(File) is False:
-        if File.find(".fit") > 0:
-            File = File.replace(".fit", ".FIT")
-            print(f"change .fit to .FIT in {File}")
-        elif ".FIT" in File:
-            File = File.replace(".FIT", ".fit")
-            print(f"change .FIT to .fit in {File}")
+    if os.path.isfile(file_name) is False:
+        if file_name.find(".fit") > 0:
+            file_name = file_name.replace(".fit", ".FIT")
+            print(f"change .fit to .FIT in {file_name}")
+        elif ".FIT" in file_name:
+            file_name = file_name.replace(".FIT", ".fit")
+            print(f"change .FIT to .fit in {file_name}")
         else:
             print(
                 f"{Bcolors.FAIL}!!!!! Check the right spelling of the file "
                 f"extension and the filepath !!!!!{Bcolors.ENDC}"
             )
 
-    return File
+    return file_name
 
 
-def add_idents(wave, flux, lineFile, minflux=None, maxflux=None):
+def add_idents(wave_length, flux, line_file, min_flux=None, max_flux=None):
     """
         Add idents to the plot
 
         Parameters
         ----------
-        wave            : `numpy.ndarray`
+        wave_length      : `numpy.ndarray`
             Wavelength array
 
-        flux            : `numpy.ndarray`
+        flux             : `numpy.ndarray`
             Flux array
 
-        minflux         : `float`, optional
+        line_file        : `string`
+            Name of the ident file
+
+        min_flux         : `float`, optional
             Minimum plot range on the Y axis
             Default is ``None``.
 
-        maxflux         : `float`, optional
+        max_flux         : `float`, optional
             Maximum plot range on the Y axis
             Default is ``None``.
-
-        lineFile        : `string`
-            Name of the ident file
     """
     #   Defining plot range
-    if minflux is None:
-        minflux = min(flux)
-        minflux = max(0, minflux)
-    if maxflux is None:
-        maxflux = max(flux)
+    if min_flux is None:
+        min_flux = min(flux)
+        min_flux = max(0, min_flux)
+    if max_flux is None:
+        max_flux = max(flux)
 
-    yoffset = (maxflux - minflux) * 0.01
-    xoffset = (max(wave) - min(wave)) * 0.01
+    flux_offset = (max_flux - min_flux) * 0.01
+    # x_offset = (max(wave_length) - min(wave_length)) * 0.01
 
-    plotminimum = minflux - yoffset
-    plotmaximum = maxflux + yoffset
+    plot_minimum_y = min_flux - flux_offset
+    plot_maximum_y = max_flux + flux_offset
 
-    #   Setting plotpositions for ident lines
-    plotheigth = plotmaximum - plotminimum
-    plotmiddleplot = (plotminimum + plotmaximum) / 2.0
-    plotupperplot = plotminimum + 0.90 * plotheigth
-    plotlowerplot = plotminimum + 0.10 * plotheigth
-    plotuppercut1 = plotminimum + 0.80 * plotheigth
-    plotlowercut1 = plotminimum + 0.20 * plotheigth
-    plotuppercut2 = plotminimum + 0.78 * plotheigth
-    plotlowercut2 = plotminimum + 0.22 * plotheigth
+    #   Setting plot positions for ident lines
+    plot_height = plot_maximum_y - plot_minimum_y
+    plot_middle_y = (plot_minimum_y + plot_maximum_y) / 2.0
+    plot_upper_y = plot_minimum_y + 0.90 * plot_height
+    plot_lower_y = plot_minimum_y + 0.10 * plot_height
+    plot_upper_y_cut_1 = plot_minimum_y + 0.80 * plot_height
+    plot_lower_y_cut_1 = plot_minimum_y + 0.20 * plot_height
+    plot_upper_y_cut_2 = plot_minimum_y + 0.78 * plot_height
+    plot_lower_y_cut_2 = plot_minimum_y + 0.22 * plot_height
 
     #   Interpolate on data to find point for ident
-    f2 = interpolate.interp1d(wave, flux)
+    flux_interpolation_fit = interpolate.interp1d(wave_length, flux)
 
     #   Open ident file
     try:
-        lines = open(lineFile, "r")
+        lines = open(line_file, "r")
     except RuntimeError as e:
         print(
             f"{Bcolors.FAIL}   Line file not found. Check variable "
-            f"'lineFile'. Specified was {lineFile}. {Bcolors.ENDC}"
+            f"'lineFile'. Specified was {line_file}. {Bcolors.ENDC}"
         )
         raise e
 
     #   Plot idents to figure
     for line in lines:
-        liste = line.split()
+        line_list = line.split()
 
-        if len(liste) == 1:
+        if len(line_list) == 1:
             print(
                 f"{Bcolors.WARNING}   [WARNING] Broken identification found "
                 f"as '{line}', must consist of [wavelength(s) + name]. I will "
@@ -1288,7 +1357,7 @@ def add_idents(wave, flux, lineFile, minflux=None, maxflux=None):
             )
             continue
         try:
-            float(liste[0])
+            float(line_list[0])
         except ValueError:
             print(
                 f"{Bcolors.WARNING}   [WARNING] Broken identification found "
@@ -1298,22 +1367,25 @@ def add_idents(wave, flux, lineFile, minflux=None, maxflux=None):
             continue
 
         #   Single ident
-        if len(liste) == 2:
-            ident_line = liste
+        if len(line_list) == 2:
+            ident_line = line_list
 
             #   Only plot if in range
-            if float(ident_line[0]) >= min(wave) and float(ident_line[0]) <= max(wave):
+            if min(wave_length) <= float(ident_line[0]) <= max(wave_length):
                 #   Plot ident point in upper or lower half of figure
-                if f2(ident_line[0]) >= plotmiddleplot:
+                if flux_interpolation_fit(ident_line[0]) >= plot_middle_y:
                     plt.plot(
                         [float(ident_line[0]), float(ident_line[0])],
-                        [f2(float(ident_line[0])), plotlowercut2],
+                        [
+                            flux_interpolation_fit(float(ident_line[0])),
+                            plot_lower_y_cut_2
+                        ],
                         color='r',
                         linestyle='-',
                     )
                     plt.text(
                         float(ident_line[0]),
-                        plotlowercut2,
+                        plot_lower_y_cut_2,
                         ' ' + ident_line[1] + ' ',
                         rotation=90,
                         ha='center',
@@ -1323,13 +1395,16 @@ def add_idents(wave, flux, lineFile, minflux=None, maxflux=None):
                 else:
                     plt.plot(
                         [float(ident_line[0]), float(ident_line[0])],
-                        [plotuppercut2, f2(float(ident_line[0]))],
+                        [
+                            plot_upper_y_cut_2,
+                            flux_interpolation_fit(float(ident_line[0]))
+                        ],
                         color='r',
                         linestyle='-',
                     )
                     plt.text(
                         float(ident_line[0]),
-                        plotuppercut2,
+                        plot_upper_y_cut_2,
                         ' ' + ident_line[1] + ' ',
                         rotation=90,
                         ha='center',
@@ -1338,79 +1413,97 @@ def add_idents(wave, flux, lineFile, minflux=None, maxflux=None):
                     )
 
         #   Multi ident
-        if len(liste) > 2:
-            points = []
-            pointsFlux = []
-            for i in liste[:-1]:
-                points.append(float(i))
-            pointcenter = sum(points) / float(len(points))
-            ident_name = str(liste[-1:])
-            if max(points) <= max(wave) and min(points) >= min(wave):
-                for i in liste[:-1]:
-                    pointsFlux.append(f2(float(i)))
-                pointFluxCenter = sum(pointsFlux) / float(len(points))
+        if len(line_list) > 2:
+            wave_length_line_elements = []
+            flux_line_elements = []
+            for wave_length_line_element in line_list[:-1]:
+                wave_length_line_elements.append(
+                    float(wave_length_line_element)
+                )
+            wave_length_line_center = (sum(wave_length_line_elements) /
+                                       float(len(wave_length_line_elements))
+                                       )
+            ident_name = str(line_list[-1:])
+            if (max(wave_length_line_elements) <= max(wave_length) and
+                    min(wave_length_line_elements) >= min(wave_length)):
+                for wave_length_line_element in line_list[:-1]:
+                    flux_line_elements.append(
+                        flux_interpolation_fit(float(wave_length_line_element))
+                    )
+                flux_center = (sum(flux_line_elements) /
+                               float(len(wave_length_line_elements))
+                               )
 
-                if pointFluxCenter <= plotmiddleplot:
+                if flux_center <= plot_middle_y:
                     plt.plot(
-                        [pointcenter, pointcenter],
-                        [plotupperplot, plotuppercut1],
+                        [wave_length_line_center, wave_length_line_center],
+                        [plot_upper_y, plot_upper_y_cut_1],
                         color='r',
                         linestyle='-',
                         linewidth=1.5,
                     )
                     plt.text(
-                        pointcenter,
-                        plotupperplot,
+                        wave_length_line_center,
+                        plot_upper_y,
                         ' ' + ident_name[2:-2] + ' ',
                         rotation=90,
                         ha='center',
                         va='bottom',
                         fontdict=font,
                     )
-                    for element in points:
+                    for element in wave_length_line_elements:
                         plt.plot(
                             [element, element],
-                            [f2(element), plotuppercut2],
+                            [
+                                flux_interpolation_fit(element), 
+                                plot_upper_y_cut_2
+                            ],
                             color='r',
                             linestyle='-',
                             linewidth=1.0,
                         )
                         plt.plot(
-                            [pointcenter, element],
-                            [plotuppercut1, plotuppercut2],
+                            [wave_length_line_center, element],
+                            [plot_upper_y_cut_1, plot_upper_y_cut_2],
                             color='r',
                             linestyle='-',
                             linewidth=1.0,
                         )
 
-                if pointFluxCenter > plotmiddleplot:
+                if flux_center > plot_middle_y:
                     plt.plot(
-                        [pointcenter, pointcenter],
-                        [plotlowerplot, plotlowercut1],
+                        [
+                            wave_length_line_center, 
+                            wave_length_line_center
+                        ],
+                        [plot_lower_y, plot_lower_y_cut_1],
                         color='r',
                         linestyle='-',
                         linewidth=1.5,
                     )
                     plt.text(
-                        pointcenter,
-                        plotlowerplot,
+                        wave_length_line_center,
+                        plot_lower_y,
                         ' ' + ident_name[2:-2] + ' ',
                         rotation=90,
                         ha='center',
                         va='top',
                         fontdict=font,
                     )
-                    for element in points:
+                    for element in wave_length_line_elements:
                         plt.plot(
                             [element, element],
-                            [f2(element), plotlowercut2],
+                            [
+                                flux_interpolation_fit(element), 
+                                plot_lower_y_cut_2
+                            ],
                             color='r',
                             linestyle='-',
                             linewidth=1.0,
                         )
                         plt.plot(
-                            [pointcenter, element],
-                            [plotlowercut1, plotlowercut2],
+                            [wave_length_line_center, element],
+                            [plot_lower_y_cut_1, plot_lower_y_cut_2],
                             color='r',
                             linestyle='-',
                             linewidth=1.0,
@@ -1418,140 +1511,150 @@ def add_idents(wave, flux, lineFile, minflux=None, maxflux=None):
     lines.close()
 
 
-def add_idents_fabian(lines, xlim, axs):
+def add_idents_fabian(lines_dict, x_plotting_limits, current_subplot):
     """
         Add idents to the plot
 
         Parameters
         ----------
-        lines                   : `dictionary`
+        lines_dict                   : `dictionary`
             Line information: key=line identifier, value[0]=wavelength,
                                                    value[1]=alignment parameter
 
-        xlim                    : `tupel`
+        x_plotting_limits            : `tuple`
             Limits for the plot in X direction
 
-        axs                     : `matplotlib.pyplot.subplots`
+        current_subplot              : `matplotlib.pyplot.subplots`
             Plot to which the idents should be added.
     """
-    for linestr, linelocs in lines.items():
-        alllinelocs = [l[0] for l in linelocs]
+    for line_identifier, line_locations in lines_dict.items():
+        line_wave_lengths = [location[0] for location in line_locations]
         #   Restrict to line within plot range
-        mask = np.logical_and(alllinelocs > xlim[0], alllinelocs < xlim[1])
+        mask = np.logical_and(
+            line_wave_lengths > x_plotting_limits[0],
+            line_wave_lengths < x_plotting_limits[1]
+        )
         if sum(mask) != 0:
-            for loc in linelocs:
+            for location in line_locations:
                 #   Align parameter
-                align = loc[1]
+                align_parameter = location[1]
                 #   Wave length
-                wave = loc[0]
+                line_wave_length = location[0]
 
-                if not xlim[0] < wave < xlim[1]:
+                if not x_plotting_limits[0] < line_wave_length < x_plotting_limits[1]:
                     continue
 
                 #   Plot identifier
-                trans = axs.get_xaxis_transform()
-                ann = axs.annotate(
-                    linestr,
-                    xy=(wave, 1.05),
-                    xycoords=trans,
-                    ha=align,
+                x_axis_transform = current_subplot.get_xaxis_transform()
+                current_subplot.annotate(
+                    line_identifier,
+                    xy=(line_wave_length, 1.05),
+                    xycoords=x_axis_transform,
+                    ha=align_parameter,
                 )
-                axs.axvline(
-                    wave,
+                current_subplot.axvline(
+                    line_wave_length,
                     color="lightgrey",
                     linestyle="--",
                     zorder=1,
                 )
 
 
-def plot_merged(wave_merged, flux_merged, obj_name, normalize, mtype=''):
+def plot_merged(wave_length_merged, flux_merged, object_name, normalize,
+                merge_type=''):
     """
         Plot merged spectrum
 
         Parameters
         ----------
-        wave_merged             : `numpy.ndarray`
+        wave_length_merged      : `numpy.ndarray`
             Wavelength data
 
         flux_merged             : `numpy.ndarray`
             Flux data
 
-        obj_name                : `string`
+        object_name             : `string`
             Name of the object
 
         normalize               : `boolean`
             If `True`, it is assumed that the flux is normalized.
 
-        mtype                   : `string`, optional
-            String that characterize the order merging procedure. It that will
-            be part of the file names.
+        merge_type              : `string`, optional
+            String characterizing the merging procedure. It will be part of
+             the filename.
             Default is ``''``.
 
     """
     print(
-        f'      Plot total spectrum:{Bcolors.OKBLUE} {obj_name}{Bcolors.ENDC}'
+        f'      Plot total spectrum:{Bcolors.OKBLUE} {object_name}'
+        f'{Bcolors.ENDC}'
     )
 
     #   Define figure
-    fig1 = plt.figure(figsize=(10, 5))
+    figure = plt.figure(figsize=(10, 5))
 
     #   Set plot range
-    offset = (max(flux_merged) - min(flux_merged)) * 0.02
-    plt.ylim([min(flux_merged) - offset, max(flux_merged) + offset])
-    offset = (max(wave_merged) - min(wave_merged)) * 0.02
-    plt.xlim([min(wave_merged) - offset, max(wave_merged) + offset])
+    flux_offset = (max(flux_merged) - min(flux_merged)) * 0.02
+    plt.ylim([min(flux_merged) - flux_offset, max(flux_merged) + flux_offset])
+    wave_length_offset = (max(wave_length_merged) - min(wave_length_merged)) * 0.02
+    plt.xlim([
+        min(wave_length_merged) - wave_length_offset,
+        max(wave_length_merged) + wave_length_offset
+    ])
 
     #   Set title and label etc.
-    plt.suptitle(f"{obj_name.replace('_', ' ')} (orders merged by {mtype})")
+    plt.suptitle(
+        f"{object_name.replace('_', ' ')} (orders merged by {merge_type})"
+    )
     plt.xlabel(r'Wavelength $\lambda\,[\AA]$')
     if normalize:
         plt.ylabel('Normalized flux')
 
         #   Set plot range
-        minflux = np.max([np.min(flux_merged) * 0.94, 0])
-        maxflux = np.min([np.max(flux_merged) * 1.06, 2])
-        plt.ylim([minflux, maxflux])
+        min_flux = np.max([np.min(flux_merged) * 0.94, 0])
+        max_flux = np.min([np.max(flux_merged) * 1.06, 2])
+        plt.ylim([min_flux, max_flux])
     else:
         plt.ylabel('Relative flux')
-        minflux = np.max([np.min(flux_merged) * 0.94, 0])
-        maxflux = np.max(flux_merged) * 1.06
-        plt.ylim([minflux, maxflux])
+        min_flux = np.max([np.min(flux_merged) * 0.94, 0])
+        max_flux = np.max(flux_merged) * 1.06
+        plt.ylim([min_flux, max_flux])
 
     plt.tick_params(top=True, right=True, which='both', direction='in')
     plt.minorticks_on()
 
     #   Plot spectrum
-    plt.plot(wave_merged, flux_merged, 'b-', linewidth=0.5)
+    plt.plot(wave_length_merged, flux_merged, 'b-', linewidth=0.5)
 
     #   Save spectrum as PDF file
     print(
         f'      Create spectrum plot{Bcolors.OKBLUE} output/'
-        f'spectrum_total_{mtype}-merged_{obj_name}.pdf {Bcolors.ENDC}'
+        f'spectrum_total_{merge_type}-merged_{object_name}.pdf {Bcolors.ENDC}'
     )
     os.system("mkdir -p output")
     pp = PdfPages(
-        f'output/spectrum_total_{mtype}-merged_{obj_name}.pdf'
+        f'output/spectrum_total_{merge_type}-merged_{object_name}.pdf'
     )
 
-    pp.savefig(fig1, dpi=300, transparent=True)
+    pp.savefig(figure, dpi=300, transparent=True)
     pp.close()
     plt.clf()
     plt.close()
 
     #   Write data to CSV file
     print(
-        f'      Write data to{Bcolors.OKBLUE} output/{obj_name}_{mtype}'
-        f'-merged_spectrum_total.csv {Bcolors.ENDC}'
+        f'      Write data to{Bcolors.OKBLUE} output/{object_name}_'
+        f'{merge_type}-merged_spectrum_total.csv {Bcolors.ENDC}'
     )
 
     np.savetxt(
-        f"output/{obj_name}_{mtype}-merged_spectrum_total.csv",
-        np.transpose((wave_merged, flux_merged)),
+        f"output/{object_name}_{merge_type}-merged_spectrum_total.csv",
+        np.transpose((wave_length_merged, flux_merged)),
         delimiter=",",
     )
     np.savetxt(
-        f"output/{obj_name}_{mtype}-merged_spectrum_total.dat",
-        np.transpose((wave_merged, flux_merged)),
+        f"output/{object_name}_{merge_type}-merged_spectrum_total.dat",
+        np.transpose((wave_length_merged, flux_merged)),
         delimiter=" ",
     )
 
@@ -1590,7 +1693,7 @@ def to_roman(number):
     return roman[number]
 
 
-def rename_elem(string):
+def replace_arabic_with_roman_numbers(string):
     """
         Replaces the Arabic numbers in a string (second part, delimiter=' ')
         with Roman numbers.
@@ -1607,438 +1710,501 @@ def rename_elem(string):
     """
     if " " in string.strip():
         string_split = string.split(" ")
-        return (string_split[0] + to_roman(string_split[1])).strip()
+        return f'{string_split[0]}{to_roman(string_split[1])}'.strip()
     else:
         return string
 
 
-def generate_lines_from_file(wl, flx, ions, lineFile="atomic_lines.tsv",
-                             line_lower_continuum=3.):
+def generate_lines_from_file(wave_length_array, flux, ion_list,
+                             line_file="atomic_lines.tsv",
+                             percentage_line_flux_must_be_below_continuum=3.):
     """
-        Read line file and prepare lines of the ions that are requested.
-        Gets the lines with the larges gaunt factors. The lines need to be
+        Read line file and prepare line_dict of the ions that are requested.
+        Gets the line_dict with the larges gaunt factors. The line_dict need to be
         within the plot range.
 
         Parameters
         ----------
-        wl                      : `numpy.ndarray`
+        wave_length_array                               : `numpy.ndarray`
             Wavelength data
 
-        flx                     : `numpy.ndarray`
+        flux                                            : `numpy.ndarray`
             Flux data
 
-        ions                    : `list` of `string`
-            Ions whose lines are to be extracted from the file.
+        ion_list                                        : `list` of `string`
+            Ions whose line_dict are to be extracted from the file.
 
-        lineFile                : `string`, optional
+        line_file                                       : `string`, optional
             Name/Path to the file with spectral line data
             Default is ``atomic_lines.tsv``.
 
-        line_lower_continuum    : `float`, optional
+        percentage_line_flux_must_be_below_continuum    : `float`, optional
             Percent the line flux must be lower than the continuum
             Default is ``3``.
 
         Returns
         -------
-        lines               : `dict`
+        line_dict                                       : `dict`
             Line information: key=ion identifier, value=wavelength
     """
     #   Interpolate on wavelength and flux to allow determination of flux
     #   level at the individual line positions
-    f = interp1d(wl, flx, fill_value=1, bounds_error=False)
+    flux_interpolation_fit = interp1d(
+        wave_length_array,
+        flux,
+        fill_value=1,
+        bounds_error=False,
+    )
 
     #   Read line file and restrict data to a reasonable range
     try:
-        linefile = pd.read_csv(lineFile, delimiter="\t")
+        line_data = pd.read_csv(line_file, delimiter="\t")
     except:
         print(
             f"{Bcolors.WARNING}   Line file not found. Check variable "
-            f"'lineFile'. Specified was {lineFile}. {Bcolors.ENDC}"
+            f"'lineFile'. Specified was {line_file}. {Bcolors.ENDC}"
         )
         return {}
-    linefile = linefile.loc[
-        (linefile["wave_A"] > 4200) & (linefile["wave_A"] < 7600)
+    line_data = line_data.loc[
+        (line_data["wave_A"] > 4200) & (line_data["wave_A"] < 7600)
         ]
 
     #   Replace Arabic numbers with Roman numbers
-    linefile['element'] = linefile['element'].apply(rename_elem)
+    line_data['element'] = line_data['element'].apply(
+        replace_arabic_with_roman_numbers
+    )
 
     #   Setup lists and a dict for the line data
-    lines = {}
-    alllines = []
-    allstrengths = []
-    allions = []
+    line_dict = {}
+    line_wave_length_list = []
+    line_strength_list = []
+    line_ion_list = []
 
-    #   Restrict line data to strong lines and lines with the largest
+    #   Restrict line data to strong line_dict and line_dict with the largest
     #   gaunt factors
-    for ion in ions:
+    for ion in ion_list:
         #   Restrict line data to current ion and the 25 strongest lines
-        subset = linefile.loc[linefile["element"] == ion]
-        subset = subset.sort_values('loggf').tail(25)
+        line_data_subset = line_data.loc[line_data["element"] == ion]
+        line_data_subset = line_data_subset.sort_values('loggf').tail(25)
 
-        for ind, row in subset.iterrows():
-            #   Get line wavelength and index of closest wavelength in wl array
-            linewl = float(row["wave_A"])
-            index = np.argmin(np.abs(wl - linewl))
+        for _, row in line_data_subset.iterrows():
+            #   Get line wavelength and index of closest wavelength in wave
+            #   length array
+            line_wave_length = float(row["wave_A"])
+            line_index = np.argmin(
+                np.abs(wave_length_array - line_wave_length)
+            )
 
             #   Mean flux around line wavelength
             try:
-                mean_flx = np.mean(flx[index - 40:index + 40])
+                mean_flux_around_line = np.mean(
+                    flux[line_index - 40:line_index + 40]
+                )
             except IndexError:
                 continue
 
-            #   Skip weak (not deep) lines
-            if f(linewl) > (100 - line_lower_continuum) / 100 * mean_flx:
+            #   Skip weak (not deep) lines with except for of hydrogen lines
+            line_flux_criterion = ((100 - percentage_line_flux_must_be_below_continuum)
+                                   / 100 * mean_flux_around_line)
+            if flux_interpolation_fit(line_wave_length) > line_flux_criterion:
                 if row["element"] != 'HI':
                     continue
 
             #   Remove/skip lines with the same wavelength if there is one
             #   with a larger gaunt factor
-            if linewl in alllines:
-                ind = alllines.index(linewl)
-                if row["loggf"] > allstrengths[ind]:
-                    lines[allions[ind]].remove([linewl, "center"])
+            if line_wave_length in line_wave_length_list:
+                line_id = line_wave_length_list.index(line_wave_length)
+                if row["loggf"] > line_strength_list[line_id]:
+                    line_dict[line_ion_list[line_id]].remove(
+                        [line_wave_length, "center"]
+                    )
 
-                    alllines.pop(ind)
-                    allstrengths.pop(ind)
-                    allions.pop(ind)
+                    line_wave_length_list.pop(line_id)
+                    line_strength_list.pop(line_id)
+                    line_ion_list.pop(line_id)
                 else:
                     continue
 
-            #   Check if ion already exists in the `lines` dictionary
+            #   Check if ion already exists in the `line_dict` dictionary
             try:
-                lines[row["element"]]
+                line_dict[row["element"]]
             except KeyError:
-                lines[row["element"]] = []
+                line_dict[row["element"]] = []
 
             #   Fill list with line data
-            lines[row["element"]].append([linewl, "center"])
-            alllines.append(linewl)
-            allstrengths.append(float(row["loggf"]))
-            allions.append(row["element"])
+            line_dict[row["element"]].append([line_wave_length, "center"])
+            line_wave_length_list.append(line_wave_length)
+            line_strength_list.append(float(row["loggf"]))
+            line_ion_list.append(row["element"])
 
     #   Convert lists to arrays
-    alllines = np.array(alllines)
-    allstrengths = np.array(allstrengths)
-    allions = np.array(allions)
+    line_wave_length_array = np.array(line_wave_length_list)
+    line_strength_array = np.array(line_strength_list)
+    ion_array = np.array(line_ion_list)
 
-    #   Remove lines that are too close to each other - keep strongest
-    for k, line in enumerate(alllines):
+    #   Remove line_dict that are too close to each other - keep strongest
+    for line_wave_length in line_wave_length_array:
         #   Find close lines
-        mask = np.logical_and(line - 4 < alllines, alllines < line + 4)
+        mask = np.logical_and(
+            line_wave_length - 4 < line_wave_length_array,
+            line_wave_length_array < line_wave_length + 4
+        )
         if sum(mask) > 1:
             #   Hydrogen is always the strongest line
-            if "HI" in allions[np.argwhere(alllines == line)]:
-                strongest = line
+            line_index = np.argwhere(line_wave_length_array == line_wave_length)
+            if "HI" in ion_array[line_index]:
+                strongest_line = line_wave_length
             else:
                 #   Find strong line based on gaunt factor
-                index_strongest = np.argmax(allstrengths[mask])
-                strongest = alllines[mask][index_strongest]
+                index_strongest_line = np.argmax(line_strength_array[mask])
+                strongest_line = line_wave_length_array[mask][index_strongest_line]
 
-            #   Get other lines (weaker lines)
-            otherlines = alllines[mask]
-            otherlines = otherlines[otherlines != strongest]
+            #   Get other line_dict (weaker line_dict)
+            other_lines_wave_length = line_wave_length_array[mask]
+            other_lines_wave_length = other_lines_wave_length[other_lines_wave_length != strongest_line]
 
-            #   Remove other lines
-            for otherline in otherlines:
-                i = np.argwhere(alllines == otherline)[0][0]
-                lines[allions[i]].remove([alllines[i], "center"])
+            #   Remove other line_dict
+            for other_line_wave_length in other_lines_wave_length:
+                index_other_line = np.argwhere(
+                    line_wave_length_array == other_line_wave_length
+                )[0][0]
+                line_dict[ion_array[index_other_line]].remove(
+                    [line_wave_length_array[index_other_line], "center"]
+                )
 
-                alllines = np.delete(alllines, i)
-                allstrengths = np.delete(allstrengths, i)
-                allions = np.delete(allions, i)
+                line_wave_length_array = np.delete(
+                    line_wave_length_array,
+                    index_other_line
+                )
+                # line_strength_list = np.delete(line_strength_array, index_other_line)
+                ion_array = np.delete(ion_array, index_other_line)
 
-    #   Set horizontal alignment for identifier string, if lines are to close
-    for ion, llist in lines.items():
-        for l in llist:
+    #   Set horizontal alignment for identifier string, if lines are too close
+    for ion, line_list in line_dict.items():
+        for line in line_list:
             #   Line wave length
-            wave = l[0]
+            line_wave_length = line[0]
 
-            #   Find close lines
-            # if sum(np.logical_and(alllines > l - 0.5, alllines < l + 0.5)) > 1:
-            # np.delete(alllines, alllines == l)
-            # lines[element].remove([l, "center"])
+            #   Find close line_dict
+            # if sum(np.logical_and(line_wave_length_array > l - 0.5, line_wave_length_array < l + 0.5)) > 1:
+            # np.delete(line_wave_length_array, line_wave_length_array == l)
+            # line_dict[element].remove([l, "center"])
             # continue
 
-            #   Identify close lines
-            mask = np.logical_and(alllines > wave - 10, alllines < wave + 10)
+            #   Identify close line_dict
+            mask = np.logical_and(
+                line_wave_length_array > line_wave_length - 10,
+                line_wave_length_array < line_wave_length + 10
+            )
             if sum(mask) > 1:
-                otherlines = alllines[mask]
-                otherlines = otherlines[otherlines != wave]
+                other_lines_wave_length = line_wave_length_array[mask]
+                other_lines_wave_length = other_lines_wave_length[
+                    other_lines_wave_length != line_wave_length
+                ]
 
                 #   Set alignment according to line wavelength
-                for otherline in otherlines:
-                    index = np.argwhere(alllines == otherline)[0][0]
-                    other_ion = allions[index]
-                    other_ion_waves = np.array(lines[other_ion])[:, 0]
-                    index_wave = list(other_ion_waves).index(str(otherline))
-                    if otherline > wave:
-                        lines[other_ion][index_wave][1] = "left"
+                for other_line_wave_length in other_lines_wave_length:
+                    line_index = np.argwhere(
+                        line_wave_length_array == other_line_wave_length
+                    )[0][0]
+                    other_ion = ion_array[line_index]
+                    other_ion_wave_lengths = np.array(line_dict[other_ion])[:, 0]
+                    index_wave_length = list(other_ion_wave_lengths).index(
+                        str(other_line_wave_length)
+                    )
+                    if other_line_wave_length > line_wave_length:
+                        line_dict[other_ion][index_wave_length][1] = "left"
                     else:
-                        lines[other_ion][index_wave][1] = "right"
+                        line_dict[other_ion][index_wave_length][1] = "right"
 
-    return lines
+    return line_dict
 
 
-def plot_panels(wave_merged, flux_merged, obj_name, normalize, lineFile,
-                panel_wave_range, mtype=''):
+def plot_panels(wave_length_merged, flux_merged, object_name, normalize,
+                line_file, panel_wave_length_range, merge_type=''):
     """
         Plot merged data in individual panels and create PDFs
 
         Parameters
         ----------
-        wave_merged             : `numpy.ndarray`
+        wave_length_merged             : `numpy.ndarray`
             Wavelength data
 
         flux_merged             : `numpy.ndarray`
             Flux data
 
-        obj_name              : `string`
+        object_name                : `string`
             Name of the object
 
         normalize               : `boolean`
             If `True`, it is assumed that the flux is normalized.
 
-        lineFile                : `string`
+        line_file               : `string`
             Path to the file with the line identifications
 
-        panel_wave_range        : `float` or `integer`
+        panel_wave_length_range        : `float` or `integer`
             Wavelength range for the individual panels
 
-        mtype                   : `string`, optional
-            String that characterize the order merging procedure. It that will
-            be part of the file names.
+        merge_type              : `string`, optional
+            String characterizing the merging procedure. It will be part of
+             the filename.
             Default is ``''``.
     """
     print(
-        f"      Plot individual panels:{Bcolors.OKBLUE} {obj_name}{Bcolors.ENDC}"
+        f"      Plot individual panels:{Bcolors.OKBLUE} {object_name}"
+        f"{Bcolors.ENDC}"
     )
 
     #   Create temporary directory
     temp_dir = tempfile.TemporaryDirectory()
 
-    N = len(wave_merged)
+    n_wave_length_steps = len(wave_length_merged)
     i = 1
-    j_p = 0
-    for j in range(0, N):
-        if wave_merged[j] >= wave_merged[0] + panel_wave_range * i or j + 1 == N:
+    start_wave_length_range = 0
+    for j in range(0, n_wave_length_steps):
+        if (wave_length_merged[j] >= wave_length_merged[0] + panel_wave_length_range * i
+                or j + 1 == n_wave_length_steps):
 
             #   Set wave and flux range
-            wave_range = wave_merged[j_p:j]
-            flux_range = flux_merged[j_p:j]
+            wave_length_range = wave_length_merged[start_wave_length_range:j]
+            flux_range = flux_merged[start_wave_length_range:j]
 
             #   Define figure and set labels etc.
-            fig = plt.figure(figsize=(12, 6))
+            plt.figure(figsize=(12, 6))
             plt.suptitle(
-                '{} ({} - {}$\,\AA$, orders merged by {})'.format(
-                    obj_name.replace('_', ' '),
-                    int(wave_range[0]),
-                    int(wave_range[-1]),
-                    mtype,
-                )
+                f"{object_name.replace('_', ' ')} ({int(wave_length_range[0])}"
+                fr" - {int(wave_length_range[-1])}$\,\AA$, orders merged by {merge_type})"
             )
             plt.xlabel(r'Wavelength $\lambda\,[\AA]$')
             if normalize:
                 plt.ylabel('Normalized flux')
 
                 #   Set plot range
-                minflux = np.max([np.min(flux_range) * 0.94, 0])
-                maxflux = np.min([np.max(flux_range) * 1.06, 2])
-                plt.ylim([minflux, maxflux])
+                min_flux = np.max([np.min(flux_range) * 0.94, 0])
+                max_flux = np.min([np.max(flux_range) * 1.06, 2])
+                plt.ylim([min_flux, max_flux])
             else:
                 plt.ylabel('Relative flux')
-                minflux = np.max([np.min(flux_range) * 0.94, 0])
-                maxflux = np.max(flux_range) * 1.06
-                plt.ylim([minflux, maxflux])
+                min_flux = np.max([np.min(flux_range) * 0.94, 0])
+                max_flux = np.max(flux_range) * 1.06
+                plt.ylim([min_flux, max_flux])
 
             plt.tick_params(top=True, right=True, which='both', direction='in')
             plt.minorticks_on()
 
             #   Plot idents
-            add_idents(wave_range, flux_range, lineFile, minflux, maxflux)
+            add_idents(
+                wave_length_range, 
+                flux_range, 
+                line_file, 
+                min_flux, 
+                max_flux,
+            )
 
             #   Plot spectrum
-            plt.step(wave_range, flux_range, 'b-', linewidth=0.5)
+            plt.step(wave_length_range, flux_range, 'b-', linewidth=0.5)
 
             #   Save panel as PDF file
             plt.savefig(
-                f'{temp_dir.name}/{obj_name}_{mtype}-merged_{i}.pdf',
+                f'{temp_dir.name}/{object_name}_{merge_type}-merged_{i}.pdf',
                 bbox_inches='tight',
             )
             plt.close()
 
             #   Write data to CSV file
             print(
-                f'      Write data to{Bcolors.OKBLUE} output/{obj_name}_'
-                f'{mtype}-merged_spectrum_{i}.csv {Bcolors.ENDC}'
+                f'      Write data to{Bcolors.OKBLUE} output/{object_name}_'
+                f'{merge_type}-merged_spectrum_{i}.csv {Bcolors.ENDC}'
             )
             np.savetxt(
-                f"output/{obj_name}_{mtype}-merged_spectrum_{i}.csv",
-                np.transpose((wave_range, flux_range)),
+                f"output/{object_name}_{merge_type}-merged_spectrum_{i}.csv",
+                np.transpose((wave_length_range, flux_range)),
                 delimiter=",",
             )
 
             i += 1
-            j_p = copy.deepcopy(j)
+            start_wave_length_range = copy.deepcopy(j)
 
     #   Merge individual plotted bins with pdfunite
     print(
-        f"      Create{Bcolors.OKBLUE} output/spectrum_panels_{mtype}-merged_"
-        f"{obj_name}.pdf {Bcolors.ENDC}"
+        f"      Create{Bcolors.OKBLUE} output/spectrum_panels_{merge_type}"
+        f"-merged_{object_name}.pdf {Bcolors.ENDC}"
     )
 
     merger = PdfMerger()
-    file_path = f"output/spectrum_panels_{mtype}-merged_{obj_name}.pdf"
-    for f in os.listdir(temp_dir.name):
-        merger.append(f"{temp_dir.name}/{f}")
+    file_path = f"output/spectrum_panels_{merge_type}-merged_{object_name}.pdf"
+    for file_ in os.listdir(temp_dir.name):
+        merger.append(f"{temp_dir.name}/{file_}")
     with open(file_path, "wb") as new_file:
         merger.write(new_file)
 
     merger.close()
 
 
-def plot_panels_fabian(wave, flux, obj_name, normalize, lines, divinto=21,
-                       mtype='', rv=0., cont=None, n=5):
+def plot_panels_fabian(wave_length, flux, object_name, normalize, 
+                       lines_to_mark, n_panels=21, merge_type='', 
+                       radial_velocity=0., continuum=None, 
+                       n_panels_per_page=5):
     """
         Plot merged data in individual panels and create PDFs
 
         Parameters
         ----------
-        wave                     : `numpy.ndarray`
+        wave_length             : `numpy.ndarray`
             Wavelength data
 
         flux                    : `numpy.ndarray`
             Flux data
 
-        obj_name                : `string`
+        object_name             : `string`
             Name of the object
 
         normalize               : `boolean`
             If `True`, it is assumed that the flux is normalized.
 
-        lines                   : `dictionary`
+        lines_to_mark           : `dictionary`
             Line information: key=line identifier, value[0]=wavelength,
                                                    value[1]=alignment parameter
 
-        divinto                 : `integer`, optional
+        n_panels                : `integer`, optional
             Number of panels that should be used to display the spectrum
             Default is ``21``.
 
-        mtype                   : `string`, optional
-            String that characterize the order merging procedure. It that will
-            be part of the file names.
+        merge_type              : `string`, optional
+            String characterizing the merging procedure. It will be part of
+             the filename.
             Default is ``''``.
 
-        rv                      : `float`, optional
+        radial_velocity         : `float`, optional
             Radial velocity
 
-        cont                    : `numpy.ndarray`
+        continuum               : `numpy.ndarray`
             Flux data of the continuum
 
-        n                       : `integer`, optional
+        n_panels_per_page       : `integer`, optional
             Number of panels on each page/plot.
             Default is ``5``.
     """
     print(
-        f"      Plot individual panels:{Bcolors.OKBLUE} {obj_name}{Bcolors.ENDC}"
+        f"      Plot individual panels:{Bcolors.OKBLUE} {object_name}"
+        f"{Bcolors.ENDC}"
     )
 
     #   Create temporary directory
     temp_dir = tempfile.TemporaryDirectory()
 
-    #   Limit to a range which can be divide by ``divinto``
-    while len(flux) % divinto != 0:
-        wave = wave[:-1]
+    #   Limit to a range which can be divided by ``n_panels``
+    while len(flux) % n_panels != 0:
+        wave_length = wave_length[:-1]
         flux = flux[:-1]
-        if cont is not None:
-            cont = cont[:-1]
+        if continuum is not None:
+            continuum = continuum[:-1]
 
-    #   Split data into ``divinto`` ranges
-    wave_s = np.split(wave, divinto)
-    flux_s = np.split(flux, divinto)
-    if cont is not None:
-        cont_s = np.split(cont, divinto)
+    #   Split data into ``n_panels`` ranges
+    wave_split = np.split(wave_length, n_panels)
+    flux_split = np.split(flux, n_panels)
+    if continuum is not None:
+        cont_split = np.split(continuum, n_panels)
     else:
-        cont_s = [0 for l in wave_s]
+        cont_split = [0 for _ in wave_split]
 
     #   Initialize plot
-    fig, axs = plt.subplots(n, 1, figsize=(8.2, 11.6))
+    figure, axes = plt.subplots(n_panels_per_page, 1, figsize=(8.2, 11.6))
 
-    for i, [w, f, c] in enumerate(zip(wave_s, flux_s, cont_s)):
+    for i, [wave_length_element, flux_element, continuum_element] in (
+            enumerate(zip(wave_split, flux_split, cont_split))):
         #   Axis index
-        axind = i
-        while axind >= 0:
-            axind -= n
+        axis_index = i
+        while axis_index >= 0:
+            axis_index -= n_panels_per_page
         i += 1
 
         # plt.tick_params(top=True, right=True, which='both', direction='in')
         # plt.minorticks_on()
 
         #   Plot data
-        axs[axind].step(w, f, color='#0066ff', zorder=5)
+        axes[axis_index].step(
+            wave_length_element,
+            flux_element,
+            color='#0066ff',
+            zorder=5,
+        )
 
         #   Plot continuum
-        if cont is not None:
-            axs[axind].plot(w, c, color='red', zorder=5)
+        if continuum is not None:
+            axes[axis_index].plot(
+                wave_length_element,
+                continuum_element,
+                color='red',
+                zorder=5,
+            )
 
         #   Set ranges
-        xlim = (np.amin(w), np.amax(w))
-        axs[axind].set_xlim(xlim)
+        x_limit = (np.amin(wave_length_element), np.amax(wave_length_element))
+        axes[axis_index].set_xlim(x_limit)
         if normalize:
-            minflux = np.max([np.amin(f) * 0.94, 0])
-            minflux = 0.
-            maxflux = np.min([np.amax(f) * 1.06, 2])
-            axs[axind].set_ylim([minflux, maxflux])
-            axs[axind].set_ylabel('Normalized flux')
-            axs[axind].legend(["Measured"], loc="lower right")
-            axs[axind].axline(
-                (xlim[0], 1.0),
-                xy2=(xlim[1], 1.0),
+            # min_flux = np.max([np.amin(flux_element) * 0.94, 0])
+            min_flux = 0.
+            max_flux = np.min([np.amax(flux_element) * 1.06, 2])
+            axes[axis_index].set_ylim([min_flux, max_flux])
+            axes[axis_index].set_ylabel('Normalized flux')
+            axes[axis_index].legend(["Measured"], loc="lower right")
+            axes[axis_index].axline(
+                (x_limit[0], 1.0),
+                xy2=(x_limit[1], 1.0),
                 color="darkgrey",
                 linestyle="-",
                 linewidth=0.5,
                 zorder=1,
             )
         else:
-            minflux = np.max([np.amin(f) * 0.94, 0])
-            maxflux = np.amax(f) * 1.06
-            axs[axind].set_ylim([minflux, maxflux])
-            axs[axind].set_ylabel('Relative flux')
-            if cont is not None:
-                axs[axind].legend(["Measured", "Continuum"], loc="lower right")
+            min_flux = np.max([np.amin(flux_element) * 0.94, 0])
+            max_flux = np.amax(flux_element) * 1.06
+            axes[axis_index].set_ylim([min_flux, max_flux])
+            axes[axis_index].set_ylabel('Relative flux')
+            if continuum is not None:
+                axes[axis_index].legend(
+                    ["Measured", "Continuum"],
+                    loc="lower right"
+                )
             else:
-                axs[axind].legend(["Measured"], loc="lower right")
+                axes[axis_index].legend(["Measured"], loc="lower right")
 
         #   Set plot title, labels, etc.
-        fig.suptitle(
-            f"Spectrum of {obj_name} ({mtype}) - Page "
-            f"[{math.ceil(i / n)}/{math.ceil(divinto / n)}]",
+        figure.suptitle(
+            f"Spectrum of {object_name} ({merge_type}) - Page "
+            f"[{math.ceil(i / n_panels_per_page)}/"
+            f"{math.ceil(n_panels / n_panels_per_page)}]",
             fontsize=15,
         )
 
-        axs[n - 1].set_xlabel("$\lambda$ [Å]")
+        axes[n_panels_per_page - 1].set_xlabel(r"$\lambda$ [Å]")
 
-        if ((i - 1) % n) == 0:
-            axs[axind].annotate(
+        if ((i - 1) % n_panels_per_page) == 0:
+            axes[axis_index].annotate(
                 f"Corrected for radial velocity "
-                f"$v_{{\mathrm{{rad}}}}={round(rv, 2)}$ km/s",
-                xy=(axs[axind].get_xlim()[0], 1.125),
-                xycoords=axs[axind].get_xaxis_transform(),
+                fr"$v_{{\mathrm{{rad}}}}={round(radial_velocity, 2)}$ km/s",
+                xy=(axes[axis_index].get_xlim()[0], 1.125),
+                xycoords=axes[axis_index].get_xaxis_transform(),
                 ha="left",
                 fontsize=10,
             )
 
         #   Plot line identifier
-        add_idents_fabian(lines, xlim, axs[axind])
+        add_idents_fabian(lines_to_mark, x_limit, axes[axis_index])
 
         #   Save plot
-        if i % n == 0:
+        if i % n_panels_per_page == 0:
             plt.tight_layout()
-            plt.savefig(f"{temp_dir.name}/{int(i / n)}.pdf")
+            plt.savefig(f"{temp_dir.name}/{int(i / n_panels_per_page)}.pdf")
             plt.close()
-            fig, axs = plt.subplots(n, 1, figsize=(8.2, 11.6))
+            figure, axes = plt.subplots(
+                n_panels_per_page,
+                1,
+                figsize=(8.2, 11.6),
+            )
 
-            ##   Write data to CSV file
+            # #   Write data to CSV file
             # print(
             # '         Write data to{} output/{}_{}-merged_spectrum'
             # '_{}.csv {}'.format(
@@ -2058,13 +2224,13 @@ def plot_panels_fabian(wave, flux, obj_name, normalize, lines, divinto=21,
 
     #   Merge individual plotted bins with pdfunite
     print(
-        f"      Create{Bcolors.OKBLUE} output/spectrum_panels_{mtype}-merged_"
-        f"{obj_name}.pdf {Bcolors.ENDC}"
+        f"      Create{Bcolors.OKBLUE} output/spectrum_panels_{merge_type}-"
+        f"merged_{object_name}.pdf {Bcolors.ENDC}"
     )
     merger = PdfMerger()
-    file_path = f"output/spectrum_panels_{mtype}-merged_{obj_name}.pdf"
-    for f in os.listdir(temp_dir.name):
-        merger.append(f"{temp_dir.name}/{f}")
+    file_path = f"output/spectrum_panels_{merge_type}-merged_{object_name}.pdf"
+    for flux_element in os.listdir(temp_dir.name):
+        merger.append(f"{temp_dir.name}/{flux_element}")
     with open(file_path, "wb") as new_file:
         merger.write(new_file)
 
@@ -2072,7 +2238,7 @@ def plot_panels_fabian(wave, flux, obj_name, normalize, lines, divinto=21,
 
 
 ############################################################################
-####                               Main                                 ####
+#                                  Main                                    #
 ############################################################################
 
 if __name__ == '__main__':
@@ -2080,13 +2246,13 @@ if __name__ == '__main__':
     #   Prepare stuff
     #
     #  Sanitize object name
-    objectname = objectname.replace(' ', '_')
+    object_name = object_name.replace(' ', '_')
 
     #  Create output directory
     os.system("mkdir -p output")
 
     ########################################################################
-    ####                      MIDAS merged spectrum                      ###
+    #                         MIDAS merged spectrum                        #
     ########################################################################
     print(
         f"{Bcolors.BOLD}Processing spectrum merged by MIDAS{Bcolors.ENDC}"
@@ -2096,12 +2262,12 @@ if __name__ == '__main__':
     #   Load spectra
     #
     #   Select FIT or fit
-    File_merged = check_file_name(File_merged)
+    file_with_merged_spectrum = check_file_name(file_with_merged_spectrum)
 
     #   Open fits file and read the data section and header section into a
-    #   2 dimensional array
+    #   2-dimensional array
     print(f"{Bcolors.BOLD}   Read files ...{Bcolors.ENDC}")
-    wave_merged, flux_merged = read_baches_merged(File_merged)
+    wave_merged, flux_merged = read_baches_merged(file_with_merged_spectrum)
 
     ###
     #   Normalize flux
@@ -2111,7 +2277,7 @@ if __name__ == '__main__':
             f"{Bcolors.BOLD}   Normalize merged MIDAS spectrum{Bcolors.ENDC}"
         )
         if norm_version == 'specutils_continuum':
-            wave_merged, flux_merged = norm_spectrum_interval(
+            wave_merged, flux_merged = normalize_spectrum_interval(
                 wave_merged,
                 flux_merged,
                 median_window,
@@ -2119,25 +2285,25 @@ if __name__ == '__main__':
             )
             wave_merged = wave_merged.value
             flux_merged = flux_merged.value
-            cont = None
+            continuum = None
         elif norm_version == 'median_max_window':
             wave_merged = wave_merged.value
             flux_merged = flux_merged.value
-            flux_merged, cont = normalize_spectrum_fabian(
+            flux_merged, continuum = normalize_spectrum_fabian(
                 wave_merged,
                 flux_merged,
-                name=objectname,
+                object_name=object_name,
             )
         else:
             print(
                 f"{Bcolors.FAIL}   Normalize method not known. Check variable:"
                 f" 'norm_version'. Skipping normalization!{Bcolors.ENDC}"
             )
-            cont = None
+            continuum = None
     else:
         wave_merged = wave_merged.value
         flux_merged = flux_merged.value
-        cont = None
+        continuum = None
 
     ###
     #   Correct for radial velocity -> 1) calculate barycentric velocity
@@ -2147,22 +2313,22 @@ if __name__ == '__main__':
     velocity_correction = radial_velocity
     if correct_bary:
         try:
-            bvc = bary_correction(File_merged)
+            bvc = bary_correction(file_with_merged_spectrum)
         except RuntimeError:
             print(
-                f"{Bcolors.WARNING}   Barycentric velocity correction could not "
-                f"be determined. Assume 0 km/s.{Bcolors.ENDC}"
+                f"{Bcolors.WARNING}   Barycentric velocity correction could "
+                f"not be determined. Assume 0 km/s.{Bcolors.ENDC}"
             )
             bvc = 0.
         velocity_correction = radial_velocity - bvc
 
-    wave_merged = correct_for_rv(
+    wave_merged = correct_for_radial_velocity(
         wave_merged,
         flux_merged,
         velocity_correction,
-        objectname,
+        object_name,
         # plot=True,
-        mtype='MIDAS',
+        merge_type='MIDAS',
     )
 
     ###
@@ -2172,9 +2338,9 @@ if __name__ == '__main__':
     plot_merged(
         wave_merged,
         flux_merged,
-        objectname,
+        object_name,
         normalize,
-        mtype='MIDAS',
+        merge_type='MIDAS',
     )
 
     ###
@@ -2184,11 +2350,11 @@ if __name__ == '__main__':
         plot_panels(
             wave_merged,
             flux_merged,
-            objectname,
+            object_name,
             normalize,
-            lineFile,
+            line_file,
             panel_wave_range,
-            mtype='MIDAS',
+            merge_type='MIDAS',
         )
     elif panel_version == 'default':
         #   Generate ident lines
@@ -2196,21 +2362,21 @@ if __name__ == '__main__':
             wave_merged,
             flux_merged,
             ions,
-            lineFile=lineFile,
-            line_lower_continuum=line_lower_continuum,
+            line_file=line_file,
+            percentage_line_flux_must_be_below_continuum=percentage_line_flux_must_be_below_continuum,
         )
 
         plot_panels_fabian(
             wave_merged,
             flux_merged,
-            objectname,
+            object_name,
             normalize,
             {**lines, **manual_lines},
-            divinto=divinto,
-            mtype='MIDAS',
-            rv=radial_velocity,
-            cont=cont,
-            n=n_panel,
+            n_panels=n_panels,
+            merge_type='MIDAS',
+            radial_velocity=radial_velocity,
+            continuum=continuum,
+            n_panels_per_page=n_panels_per_page,
         )
     else:
         print(
@@ -2228,11 +2394,11 @@ if __name__ == '__main__':
         #   Load spectra
         #
         #   Select FIT or fit
-        File_orders = check_file_name(File_orders)
+        file_with_orders = check_file_name(file_with_orders)
 
         #   Open fits file and read the data and header section
         print(f"{Bcolors.BOLD}   Read files ...{Bcolors.ENDC}.")
-        wave_list, flux_list = read_baches(File_orders)
+        wave_list, flux_list = read_baches(file_with_orders)
 
         if normalize and norm_individual:
             ###
@@ -2245,13 +2411,15 @@ if __name__ == '__main__':
 
             orders = []
             for i, wave in enumerate(wave_list):
-                orders.append(Spectrum1D(spectral_axis=wave, flux=flux_list[i]))
+                orders.append(
+                    Spectrum1D(spectral_axis=wave, flux=flux_list[i])
+                )
 
             #   Normalize & merge spectra
-            merged_wave, merged_flux = norm_merge_spectra(
+            merged_wave, merged_flux = normalize_and_merge_spectra(
                 orders,
                 median_window=median_window,
-                order=porder,
+                normalization_order=porder,
             )
         else:
             ###
@@ -2268,7 +2436,7 @@ if __name__ == '__main__':
             merged_wave, merged_flux = merge_spectra(
                 wave_list,
                 flux_list,
-                trim_value=trim_value,
+                trim_value_start_order=trim_value_start_order,
                 debug_plot=debug_plot,
             )
 
@@ -2287,7 +2455,7 @@ if __name__ == '__main__':
                 f"{Bcolors.BOLD}   Normalize merged spectrum{Bcolors.ENDC}"
             )
             if norm_version == 'specutils_continuum':
-                merged_wave, merged_flux = norm_spectrum_interval(
+                merged_wave, merged_flux = normalize_spectrum_interval(
                     merged_wave,
                     merged_flux,
                     median_window,
@@ -2295,14 +2463,14 @@ if __name__ == '__main__':
                 )
                 merged_wave = merged_wave.value
                 merged_flux = merged_flux.value
-                cont = None
+                continuum = None
             elif norm_version == 'median_max_window':
                 merged_wave = merged_wave.value
                 merged_flux = merged_flux.value
-                merged_flux, cont = normalize_spectrum_fabian(
+                merged_flux, continuum = normalize_spectrum_fabian(
                     merged_wave,
                     merged_flux,
-                    name=objectname,
+                    object_name=object_name,
                 )
             else:
                 print(
@@ -2313,18 +2481,18 @@ if __name__ == '__main__':
         else:
             merged_wave = merged_wave.value
             merged_flux = merged_flux.value
-            cont = None
+            continuum = None
 
         ###
         #   Correct for radial velocity
         #
-        merged_wave = correct_for_rv(
+        merged_wave = correct_for_radial_velocity(
             merged_wave,
             merged_flux,
             velocity_correction,
-            objectname,
+            object_name,
             # plot=True,
-            mtype='PYTHON',
+            merge_type='PYTHON',
         )
 
         ###
@@ -2334,9 +2502,9 @@ if __name__ == '__main__':
         plot_merged(
             merged_wave,
             merged_flux,
-            objectname,
+            object_name,
             normalize,
-            mtype='PYTHON',
+            merge_type='PYTHON',
         )
 
         ###
@@ -2346,11 +2514,11 @@ if __name__ == '__main__':
             plot_panels(
                 merged_wave,
                 merged_flux,
-                objectname,
+                object_name,
                 normalize,
-                lineFile,
+                line_file,
                 panel_wave_range,
-                mtype='PYTHON',
+                merge_type='PYTHON',
             )
         elif panel_version == 'default':
             #   Generate ident lines
@@ -2358,21 +2526,21 @@ if __name__ == '__main__':
                 merged_wave,
                 merged_flux,
                 ions,
-                lineFile=lineFile,
-                line_lower_continuum=line_lower_continuum,
+                line_file=line_file,
+                percentage_line_flux_must_be_below_continuum=percentage_line_flux_must_be_below_continuum,
             )
 
             plot_panels_fabian(
                 merged_wave,
                 merged_flux,
-                objectname,
+                object_name,
                 normalize,
                 {**lines, **manual_lines},
-                divinto=divinto,
-                mtype='PYTHON',
-                rv=radial_velocity,
-                cont=cont,
-                n=n_panel,
+                n_panels=n_panels,
+                merge_type='PYTHON',
+                radial_velocity=radial_velocity,
+                continuum=continuum,
+                n_panels_per_page=n_panels_per_page,
             )
         else:
             print(

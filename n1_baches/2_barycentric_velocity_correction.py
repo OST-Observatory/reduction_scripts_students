@@ -56,7 +56,7 @@ class bcolors:                                              #definition of some 
     UNDERLINE       = '\033[4m'
 
 
-####################   CONTRUCTION OF ASTROPY SKYCOORD INSTANCE    ####################
+####################   CONSTRUCTION OF ASTROPY SKYCOORD INSTANCE    ####################
 try:
     int(time_zone)
 except:
@@ -73,7 +73,7 @@ except:
     )
     sys.exit()
 
-try:    #construct an EarthLocation instance with the paramters given
+try:    #construct an EarthLocation instance with the parameters given
     obs_site = EarthLocation(
         lat         = observatory_latitude,
         lon         = observatory_longitude,
@@ -86,7 +86,7 @@ except:
     )
     sys.exit()
 
-try:    #construct a SkyCoord instance with the paramters given
+try:    #construct a SkyCoord instance with the parameters given
     obs_coord = SkyCoord(
         ra          = right_ascension,
         dec         = declination,

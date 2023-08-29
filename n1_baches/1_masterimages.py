@@ -1,13 +1,13 @@
 #! /usr/bin/python3
 # -*- coding: utf-8 -*-
 
-'''
+"""
     Reduce spectral data taken with the BACHES spectrograph for extraction
     and analysis by means of MIDAS
-'''
+"""
 
 ############################################################################
-####           Configuration: modify the file in this section           ####
+#              Configuration: modify the file in this section              #
 ############################################################################
 
 ###
@@ -23,7 +23,7 @@ path_flat_darks = '?'
 path_flats = '?'
 
 #   Thorium Argon exposures:
-path_thars = '?'
+path_thorium_argon = '?'
 
 #   Spectra:
 path_spectra = '?'
@@ -32,39 +32,37 @@ path_spectra = '?'
 #   the current directory.
 out_path = 'output'
 
-
 ###
 #   Flip images? Possibilities: True and False
 #
-flip_bool = False
-# flip_bool = True
+flip_images = False
+# flip_images = True
 
 
 ###
 #   Bin the images? Possibilities: True and False
 #
-bin_bool = False
-# bin_bool = True
+bin_images = False
+# bin_images = True
 #   Binning factor
-bin_val = 2
-
+binning_value = 2
 
 ###
-#   Trim images to remove non essential parts and thus simplify MIDAS handling
+#   Trim images to remove non-essential parts and thus simplify MIDAS handling
 #   Possibilities: True and False; Default: True
 #
-trim_bool = True
+trim_image = True
 
 #   Number of pixel to be removed from the start (''_s'') and end (''_e'')
 #   of the image in X (''_x_'') and Y (''_y_'') directory
 #   Typically, the default settings below do not need to be changed!
-trim_x_s=400
-trim_x_e=400
-trim_y_s=300
-trim_y_e=250
+trim_x_start = 400
+trim_x_end = 400
+trim_y_start = 300
+trim_y_end = 250
 
 ############################################################################
-####                            Libraries                               ####
+#                               Libraries                                  #
 ############################################################################
 
 import sys
@@ -81,148 +79,148 @@ from astropy.nddata import CCDData
 import astropy.units as u
 
 from ost import checks, terminal_output
-import ost.reduce.aux as aux
+import ost.reduce.utilities as utilities
 
 import warnings
+
 warnings.filterwarnings('ignore')
 
 from astropy import log
+
 log.setLevel('ERROR')
 
+
 ############################################################################
-####                            Functions                               ####
+#                               Functions                                  #
 ############################################################################
 
-def master_img(path, out_path, img_type, flip_bool=False, bin_bool=False,
-                bin_val=2, trim_bool=True, method='average',
-                subtract_dark=False, master_dark='master_dark.fit',
-                divide_flat=False, master_flat='master_flat.fit',
-                scale_func=None, trim_x_s=400, trim_x_e=400, trim_y_s=300,
-                trim_y_e=250):
-    '''
+
+def master_image(path, output_path, image_type, flip_bool=False,
+                 bin_bool=False, binning_factor=2, trim_bool=True,
+                 combine_method='average', subtract_dark=False,
+                 master_dark='master_dark.fit', divide_flat=False,
+                 master_flat='master_flat.fit', scaling_function=None,
+                 trim_x_s=400, trim_x_e=400, trim_y_s=300, trim_y_e=250):
+    """
         Create master images
 
         Parameters
         ----------
-        path                : `string`
+        path                    : `string`
             Path to the directory with the files
 
-        out_path            : `string`
+        output_path             : `pathlib.Path`
             Path to the directory to which the individual files should
             be written
 
-        img_type            : `string`
+        image_type              : `string`
             String that characterizes the image type.
 
-        flip_bool           : `boolean`, optional
+        flip_bool               : `boolean`, optional
             If `True` the images will be flipped in X and Y direction
             Default is ``False``.
 
-        bin_bool            : `boolean`, optional
+        bin_bool                : `boolean`, optional
             If `True` the images will be binned in X and Y direction
             Default is ``False``.
 
-        bin_val             : `integer`, optional
+        binning_factor          : `integer`, optional
             Value by which the image should be reduced in size.
             Default is ``2``.
 
-        trim_bool           : `boolean`, optional
+        trim_bool               : `boolean`, optional
             If `True` the images will be trimmed in X and Y direction
             Default is ``True``.
 
-        method              : `string`, optional
+        combine_method          : `string`, optional
             Method used to average the images.
             Default is ``average``.
 
-        subtract_dark       : `boolean`, optional
+        subtract_dark           : `boolean`, optional
             If `True` a master dark will be subtracted for all input images.
             Default is ``False``.
 
-        master_dark         : `string`, optional
+        master_dark             : `string`, optional
             Name of the master dark file to be subtracted from all input
             images.
             Default is ``master_dark.fit``.
 
-        divide_flat         : `boolean`, optional
+        divide_flat             : `boolean`, optional
             If `True` the spectra will be divided by a master flat.
             Default is ``False``.
 
-        master_flat         : `string`, optional
+        master_flat             : `string`, optional
             Name of the master flat file.
             Default is ``master_flat.fit``.
 
-        scale_func          : `function` or `None`, optional
+        scaling_function        : `function` or `None`, optional
             Return value of the provided function will be used to scale the
             image before combining. If `None` no scaling is applied.
             Default is ``None``.
 
-        trim_x_s             : `integer`
+        trim_x_s                : `integer`
             Number of Pixel to be removed from the start of the image in
             X direction.
 
-        trim_x_e             : `integer`
+        trim_x_e                : `integer`
             Number of Pixel to be removed from the end of the image in
             X direction.
 
-        trim_y_s             : `integer`
+        trim_y_s                : `integer`
             Number of Pixel to be removed from the start of the image in
             Y direction.
 
-        trim_y_e             : `integer`
+        trim_y_e                : `integer`
             Number of Pixel to be removed from the end of the image in
             Y direction.
-    '''
-    terminal_output.print_terminal(
-        img_type,
+    """
+    terminal_output.print_to_terminal(
+        f"Reduce {image_type} images",
         indent=1,
-        string="Reduce {} images",
-        )
+    )
 
     #   Load images
     images = ccdp.ImageFileCollection(path)
 
     #   Flip, trim, bin?
     if flip_bool:
-        images = aux.flip_img(images, out_path / img_type)
+        images = utilities.flip_img(images, output_path / image_type)
     if bin_bool:
-        images = aux.bin_img(images, out_path / img_type, bin_val)
+        images = utilities.bin_img(images, output_path / image_type, binning_factor)
     if trim_bool:
-        images = aux.trim_img(
+        images = utilities.trim_img(
             images,
-            out_path / img_type,
+            output_path / image_type,
             xs=trim_x_s,
             xe=trim_x_e,
             ys=trim_y_s,
             ye=trim_y_e,
-            )
+        )
 
     #   Subtract dark
     if subtract_dark:
-        terminal_output.print_terminal(
-            img_type,
+        terminal_output.print_to_terminal(
+            "Subtract master dark",
             indent=2,
-            string="Subtract master dark",
-            )
+        )
 
         #   Read master dark
         dark = CCDData.read(master_dark)
 
         for img, file_name in images.ccds(
-            ccd_kwargs={'unit': 'adu'},
-            return_fname=True,
-            ):
-
+                ccd_kwargs={'unit': 'adu'},
+                return_fname=True,
+        ):
             #   Subtract the dark current
             img = ccdp.subtract_dark(
                 img,
                 dark,
                 exposure_time='exptime',
                 exposure_unit=u.second,
-                )
+            )
 
             #   Save the result
-            #directory = img_type+'_dark_corrected'
-            img_path = out_path / img_type / 'dark_corrected'
+            img_path = output_path / image_type / 'dark_corrected'
             checks.check_out(img_path)
             img.write(img_path / file_name, overwrite=True)
 
@@ -232,25 +230,22 @@ def master_img(path, out_path, img_type, flip_bool=False, bin_bool=False,
     #   Divide by flat
     if divide_flat:
         terminal_output.print_terminal(
-            img_type,
+            "Divide by master flat",
             indent=2,
-            string="Divide by master flat",
-            )
+        )
 
         #   Read master flat
         flat = CCDData.read(master_flat)
 
         for img, file_name in images.ccds(
-            ccd_kwargs={'unit': 'adu'},
-            return_fname=True,
-            ):
-
+                ccd_kwargs={'unit': 'adu'},
+                return_fname=True,
+        ):
             #   Divide by flat
             img = ccdp.flat_correct(img, flat)
 
             #   Save the result
-            #directory = img_type+'_flatfielded'
-            img_path = out_path / img_type / 'flatfielded'
+            img_path = output_path / image_type / 'flat-fielded'
             checks.check_out(img_path)
             img.write(img_path / file_name, overwrite=True)
 
@@ -265,8 +260,8 @@ def master_img(path, out_path, img_type, flip_bool=False, bin_bool=False,
     #   Stack images
     combined_img = ccdp.combine(
         images.files,
-        method=method,
-        scale=scale_func,
+        method=combine_method,
+        scale=scaling_function,
         sigma_clip=True,
         sigma_clip_low_thresh=5,
         sigma_clip_high_thresh=5,
@@ -274,14 +269,14 @@ def master_img(path, out_path, img_type, flip_bool=False, bin_bool=False,
         sigma_clip_dev_func=mad_std,
         mem_limit=15e9,
         unit='adu',
-        )
+    )
 
     #   Save master image
-    combined_img.write('master_'+img_type+'.fit', overwrite=True)
+    combined_img.write(f'master_{image_type}.fit', overwrite=True)
 
 
 ############################################################################
-####                               Main                                 ####
+#                                  Main                                    #
 ############################################################################
 
 if __name__ == '__main__':
@@ -290,106 +285,102 @@ if __name__ == '__main__':
     #
     path_darks = checks.check_pathlib_Path(path_darks)
     path_flat_darks = checks.check_pathlib_Path(path_flat_darks)
-    path_thars = checks.check_pathlib_Path(path_thars)
+    path_thorium_argon = checks.check_pathlib_Path(path_thorium_argon)
     path_flats = checks.check_pathlib_Path(path_flats)
     if path_spectra != '?':
         path_spectra = checks.check_pathlib_Path(path_spectra)
     checks.check_out(out_path)
     out_path = Path(out_path)
 
-
     ###
     #   Master dark
     #
-    master_img(
+    master_image(
         path_darks,
         out_path,
-        flip_bool=flip_bool,
-        bin_bool=bin_bool,
-        bin_val=bin_val,
-        trim_bool=trim_bool,
-        trim_x_s=trim_x_s,
-        trim_x_e=trim_x_e,
-        trim_y_s=trim_y_s,
-        trim_y_e=trim_y_e,
-        img_type='dark',
-        )
+        flip_bool=flip_images,
+        bin_bool=bin_images,
+        binning_factor=binning_value,
+        trim_bool=trim_image,
+        trim_x_s=trim_x_start,
+        trim_x_e=trim_x_end,
+        trim_y_s=trim_y_start,
+        trim_y_e=trim_y_end,
+        image_type='dark',
+    )
 
     ###
     #   Master flat dark
     #
-    master_img(
+    master_image(
         path_flat_darks,
         out_path,
-        flip_bool=flip_bool,
-        bin_bool=bin_bool,
-        bin_val=bin_val,
-        trim_bool=trim_bool,
-        trim_x_s=trim_x_s,
-        trim_x_e=trim_x_e,
-        trim_y_s=trim_y_s,
-        trim_y_e=trim_y_e,
-        img_type='flat_dark',
-        )
-
+        flip_bool=flip_images,
+        bin_bool=bin_images,
+        binning_factor=binning_value,
+        trim_bool=trim_image,
+        trim_x_s=trim_x_start,
+        trim_x_e=trim_x_end,
+        trim_y_s=trim_y_start,
+        trim_y_e=trim_y_end,
+        image_type='flat_dark',
+    )
 
     ###
     #   Master Thorium Argon
     #
-    master_img(
-        path_thars,
+    master_image(
+        path_thorium_argon,
         out_path,
-        flip_bool=flip_bool,
-        bin_bool=bin_bool,
-        bin_val=bin_val,
-        trim_bool=trim_bool,
-        trim_x_s=trim_x_s,
-        trim_x_e=trim_x_e,
-        trim_y_s=trim_y_s,
-        trim_y_e=trim_y_e,
-        img_type='thar',
-        )
-
+        flip_bool=flip_images,
+        bin_bool=bin_images,
+        binning_factor=binning_value,
+        trim_bool=trim_image,
+        trim_x_s=trim_x_start,
+        trim_x_e=trim_x_end,
+        trim_y_s=trim_y_start,
+        trim_y_e=trim_y_end,
+        image_type='thar',
+    )
 
     ###
     #   Master flat
     #
-    master_img(
+    master_image(
         path_flats,
         out_path,
-        flip_bool=flip_bool,
-        bin_bool=bin_bool,
-        bin_val=bin_val,
-        trim_bool=trim_bool,
-        trim_x_s=trim_x_s,
-        trim_x_e=trim_x_e,
-        trim_y_s=trim_y_s,
-        trim_y_e=trim_y_e,
-        img_type='flat',
+        flip_bool=flip_images,
+        bin_bool=bin_images,
+        binning_factor=binning_value,
+        trim_bool=trim_image,
+        trim_x_s=trim_x_start,
+        trim_x_e=trim_x_end,
+        trim_y_s=trim_y_start,
+        trim_y_e=trim_y_end,
+        image_type='flat',
         subtract_dark=True,
         master_dark='master_flat_dark.fit',
-        scale_func=aux.inv_median,
-        )
-
+        scaling_function=utilities.inv_median,
+    )
 
     ###
     #   Master spectrum
     #
-    master_img(
+    master_image(
         path_spectra,
         out_path,
-        flip_bool=flip_bool,
-        bin_bool=bin_bool,
-        bin_val=bin_val,
-        trim_bool=trim_bool,
-        trim_x_s=trim_x_s,
-        trim_x_e=trim_x_e,
-        trim_y_s=trim_y_s,
-        trim_y_e=trim_y_e,
-        method='median',
-        img_type='spectrum',
+        flip_bool=flip_images,
+        bin_bool=bin_images,
+        binning_factor=binning_value,
+        trim_bool=trim_image,
+        trim_x_s=trim_x_start,
+        trim_x_e=trim_x_end,
+        trim_y_s=trim_y_start,
+        trim_y_e=trim_y_end,
+        combine_method='median',
+        image_type='spectrum',
         subtract_dark=True,
         master_dark='master_dark.fit',
-        #divide_flat=True,
-        #master_flat='master_flat.fit',
-        )
+        # divide_flat=True,
+        # master_flat='master_flat.fit',
+    )

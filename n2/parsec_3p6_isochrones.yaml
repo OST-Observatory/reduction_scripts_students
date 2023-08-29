@@ -2,30 +2,30 @@
 #   PARCES isochrones (CMD 3.6)
 
 #   Files
-#isos: '~/isochrone_database/parsec_iso/3p6/solar_0p2Gyr/iso_parsec_0p2Gyr.dat'
-#isos: '~/isochrone_database/parsec_iso/3p6/solar_0p5Gyr/iso_parsec_0p5Gyr.dat'
-isos: '~/isochrone_database/parsec_iso/3p6/solar_1Gyr/iso_parsec_1Gyr.dat'
+# isochrones: '~/isochrone_database/parsec_iso/3p6/solar_0p2Gyr/iso_parsec_0p2Gyr.dat'
+# isochrones: '~/isochrone_database/parsec_iso/3p6/solar_0p5Gyr/iso_parsec_0p5Gyr.dat'
+isochrones: '~/isochrone_database/parsec_iso/3p6/solar_1Gyr/iso_parsec_1Gyr.dat'
 
 #   Type
-isotype: 'file'
+isochrone_type: 'file'
 
 #   Type of the second filter used in CMD plots
-ISOcolumntype:
+isochrone_column_type:
     'B': 'single'
 
 #   ID of the columns in the isochrone data file containing the magnitudes
 #   and the age
-ISOcolumn:
+isochrone_column:
     'V': 31
     'B': 30
     'AGE': 3
 
 #   Keyword to identify a new isochrone
-keyword: '# Zini'
+isochrone_keyword: '# Zini'
 
 #   Logarithmic age
-logAGE: true
+isochrone_log_age: true
 
 #   Plot legend for isochrones?
-IsoLabels: true
+isochrone_legend: true
 ...

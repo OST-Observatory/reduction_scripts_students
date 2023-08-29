@@ -3,29 +3,29 @@
 #   overshooting, diffusion, mass loss efficiency η = 0.3
 
 #   Files
-#isos: "~/isochrone_database/basti-iac/FEHm155/all/"
-isos: "~/isochrone_database/basti-iac/FEHm155/1Gyr/"
+#   isochrones: "~/isochrone_database/basti-iac/FEHm155/all/"
+isochrones: "~/isochrone_database/basti-iac/FEHm155/1Gyr/"
 
 #   Type
-isotype: 'directory'
+isochrone_type: 'directory'
 
 #   Type of the second filter used in CMD plots
-ISOcolumntype:
+isochrone_column_type:
     'B': 'single'
 
 #   ID of the columns in the isochrone data file containing the magnitudes
 #   and the age
-ISOcolumn:
+isochrone_column:
     'V': 8
     'B': 7
     'AGE': 0
 
 #   Keyword to identify a new isochrone
-keyword: None
+isochrone_keyword: None
 
 #   Logarithmic age
-logAGE: true
+isochrone_log_age: true
 
 #   Plot legend for isochrones?
-IsoLabels: true
+isochrone_legend: true
 ...

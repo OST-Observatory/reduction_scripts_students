@@ -78,8 +78,8 @@ import ccdproc as ccdp
 from astropy.nddata import CCDData
 import astropy.units as u
 
-from ost import checks, terminal_output
-import ost.reduce.utilities as utilities
+from ost_photometry import checks, terminal_output
+import ost_photometry.reduce.utilities as utilities
 
 import warnings
 
@@ -184,17 +184,17 @@ def master_image(path, output_path, image_type, flip_bool=False,
 
     #   Flip, trim, bin?
     if flip_bool:
-        images = utilities.flip_img(images, output_path / image_type)
+        images = utilities.flip_image(images, output_path / image_type)
     if bin_bool:
-        images = utilities.bin_img(images, output_path / image_type, binning_factor)
+        images = utilities.bin_image(images, output_path / image_type, binning_factor)
     if trim_bool:
-        images = utilities.trim_img(
+        images = utilities.trim_image_simple(
             images,
             output_path / image_type,
-            xs=trim_x_s,
-            xe=trim_x_e,
-            ys=trim_y_s,
-            ye=trim_y_e,
+            redundant_pixel_x_start=trim_x_s,
+            redundant_pixel_x_end=trim_x_e,
+            redundant_pixel_y_start=trim_y_s,
+            redundant_pixel_y_end=trim_y_e,
         )
 
     #   Subtract dark
@@ -221,7 +221,7 @@ def master_image(path, output_path, image_type, flip_bool=False,
 
             #   Save the result
             img_path = output_path / image_type / 'dark_corrected'
-            checks.check_out(img_path)
+            checks.check_output_directories(img_path)
             img.write(img_path / file_name, overwrite=True)
 
         #   Reload images
@@ -283,13 +283,13 @@ if __name__ == '__main__':
     ###
     #   Check input and output directories
     #
-    path_darks = checks.check_pathlib_Path(path_darks)
-    path_flat_darks = checks.check_pathlib_Path(path_flat_darks)
-    path_thorium_argon = checks.check_pathlib_Path(path_thorium_argon)
-    path_flats = checks.check_pathlib_Path(path_flats)
+    path_darks = checks.check_pathlib_path(path_darks)
+    path_flat_darks = checks.check_pathlib_path(path_flat_darks)
+    path_thorium_argon = checks.check_pathlib_path(path_thorium_argon)
+    path_flats = checks.check_pathlib_path(path_flats)
     if path_spectra != '?':
-        path_spectra = checks.check_pathlib_Path(path_spectra)
-    checks.check_out(out_path)
+        path_spectra = checks.check_pathlib_path(path_spectra)
+    checks.check_output_directories(out_path)
     out_path = Path(out_path)
 
     ###
@@ -360,7 +360,7 @@ if __name__ == '__main__':
         image_type='flat',
         subtract_dark=True,
         master_dark='master_flat_dark.fit',
-        scaling_function=utilities.inv_median,
+        scaling_function=utilities.inverse_median,
     )
 
     ###

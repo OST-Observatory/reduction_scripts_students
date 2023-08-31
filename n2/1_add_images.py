@@ -106,7 +106,7 @@ if __name__ == '__main__':
         output_dir,
         rm_cosmic_rays=rm_cosmic_rays,
         exposure_time_tolerance=exposure_time_tolerance,
-        target=target_name,
+        target_name=target_name,
         )
 
 """

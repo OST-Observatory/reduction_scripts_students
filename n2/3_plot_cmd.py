@@ -145,7 +145,7 @@ if __name__ == '__main__':
     ###
     #   Check output directories
     #
-    checks.check_out(output_dir)
+    checks.check_output_directories(output_dir)
 
     ###
     #   Read CMD file
@@ -172,8 +172,8 @@ if __name__ == '__main__':
     #   Loop over all CMDs/colors
     for second_filer in filter_list:
         #   Extract data
-        magnitude_filter_1 = tbl_cmd[main_filter].value
-        magnitude_filter_2 = tbl_cmd[second_filer].value
+        magnitude_filter_1 = tbl_cmd[f'{main_filter} [mag]'].value
+        magnitude_filter_2 = tbl_cmd[f'{second_filer} [mag]'].value
 
         #   Apply zero point
         magnitude_filter_1 = magnitude_filter_1 + cali[main_filter]

@@ -257,7 +257,7 @@ if __name__ == '__main__':
         sigma_object_psf,
         ra_star,
         dec_star,
-        photophotometry_extraction_methodmetry=photometry_extraction_method,
+        photometry_extraction_method=photometry_extraction_method,
         radius_aperture=radius_aperture,
         inner_annulus_radius=inner_annulus_radius,
         outer_annulus_radius=outer_annulus_radius,

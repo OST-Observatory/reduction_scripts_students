@@ -63,6 +63,9 @@ import tempfile
 import warnings
 warnings.filterwarnings('ignore')
 
+from astropy import log
+log.setLevel('ERROR')
+
 from ost_photometry.reduce import redu
 from ost_photometry.reduce import utilities
 

@@ -1859,11 +1859,11 @@ def generate_lines_from_file(wave_length_array, flux, ion_list,
                 index_strongest_line = np.argmax(line_strength_array[mask])
                 strongest_line = line_wave_length_array[mask][index_strongest_line]
 
-            #   Get other line_dict (weaker line_dict)
+            #   Get other lines next to the current line (weaker lines)
             other_lines_wave_length = line_wave_length_array[mask]
             other_lines_wave_length = other_lines_wave_length[other_lines_wave_length != strongest_line]
 
-            #   Remove other line_dict
+            #   Remove the other lines
             for other_line_wave_length in other_lines_wave_length:
                 index_other_line = np.argwhere(
                     line_wave_length_array == other_line_wave_length
@@ -1876,6 +1876,10 @@ def generate_lines_from_file(wave_length_array, flux, ion_list,
                     line_wave_length_array,
                     index_other_line
                 )
+                line_strength_array = np.delete(
+                    line_strength_array,
+                    index_other_line
+                )
                 # line_strength_list = np.delete(line_strength_array, index_other_line)
                 ion_array = np.delete(ion_array, index_other_line)
 
@@ -1885,13 +1889,13 @@ def generate_lines_from_file(wave_length_array, flux, ion_list,
             #   Line wave length
             line_wave_length = line[0]
 
-            #   Find close line_dict
+            #   Find close lines
             # if sum(np.logical_and(line_wave_length_array > l - 0.5, line_wave_length_array < l + 0.5)) > 1:
             # np.delete(line_wave_length_array, line_wave_length_array == l)
             # line_dict[element].remove([l, "center"])
             # continue
 
-            #   Identify close line_dict
+            #   Identify close lines
             mask = np.logical_and(
                 line_wave_length_array > line_wave_length - 10,
                 line_wave_length_array < line_wave_length + 10

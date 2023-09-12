@@ -107,6 +107,7 @@ if __name__ == '__main__':
         rm_cosmic_rays=rm_cosmic_rays,
         exposure_time_tolerance=exposure_time_tolerance,
         target_name=target_name,
+        temperature_tolerance=5.,
         )
 
 """

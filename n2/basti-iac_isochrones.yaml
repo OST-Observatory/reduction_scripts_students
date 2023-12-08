@@ -12,12 +12,22 @@ isochrone_type: 'directory'
 #   Type of the second filter used in CMD plots
 isochrone_column_type:
     'B': 'single'
+    'R': 'single'
+    'I': 'single'
+    'J': 'single'
+    'H': 'single'
+    'K': 'single'
 
 #   ID of the columns in the isochrone data file containing the magnitudes
 #   and the age
 isochrone_column:
     'V': 8
     'B': 7
+    'R': 9
+    'I': 10
+    'J': 11
+    'H': 12
+    'K': 13
     'AGE': 0
 
 #   Keyword to identify a new isochrone

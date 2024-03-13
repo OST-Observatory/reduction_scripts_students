@@ -20,11 +20,16 @@
 ############################################################################
 #                         Simple folder structure                          #
 ############################################################################
+#   PLEASE NOTE: Either specify a single directory with all raw files at
+#                this point, or use the directory structure shown below.
 raw_files = '?'
 
 ############################################################################
 #                           Individual folders                             #
 ############################################################################
+#   PLEASE NOTE: Either use the directory scheme shown below or specify a
+#   single directory with all raw files above.
+
 # Path to the bias -- If set to '?', bias exposures are not used.
 bias = '?'
 

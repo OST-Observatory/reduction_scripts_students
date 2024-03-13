@@ -57,7 +57,7 @@ rm_cosmic_rays = True
 # rm_cosmic_rays = False
 
 #   Tolerance between science and dark exposure times in s
-exposure_time_tolerance = 4.
+exposure_time_tolerance = 5.
 
 
 ############################################################################

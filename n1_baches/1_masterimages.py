@@ -182,6 +182,9 @@ def master_image(path, output_path, image_type, flip_bool=False,
     #   Load images
     images = ccdp.ImageFileCollection(path)
 
+    if not images:
+        raise NoFitsFilesFound(f'No FITS files found in path {path}.')
+
     #   Flip, trim, bin?
     if flip_bool:
         images = utilities.flip_image(images, output_path / image_type)
@@ -219,6 +222,9 @@ def master_image(path, output_path, image_type, flip_bool=False,
                 exposure_unit=u.second,
             )
 
+            #   Check output path
+            checks.check_output_directories(output_path / image_type)
+
             #   Save the result
             img_path = output_path / image_type / 'dark_corrected'
             checks.check_output_directories(img_path)
@@ -243,6 +249,9 @@ def master_image(path, output_path, image_type, flip_bool=False,
         ):
             #   Divide by flat
             img = ccdp.flat_correct(img, flat)
+
+            #   Check output path
+            checks.check_output_directories(output_path / image_type)
 
             #   Save the result
             img_path = output_path / image_type / 'flat-fielded'
@@ -274,6 +283,9 @@ def master_image(path, output_path, image_type, flip_bool=False,
     #   Save master image
     combined_img.write(f'master_{image_type}.fit', overwrite=True)
 
+
+class NoFitsFilesFound(Exception):
+    pass
 
 ############################################################################
 #                                  Main                                    #

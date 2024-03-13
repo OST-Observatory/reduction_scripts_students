@@ -21,30 +21,18 @@ name_of_star_cluster = "?"
 #   Name of CMD data file
 cmd_file_name = "?/cmd.dat"
 
-#   Color and filter to plot in the CMD
-#       -> the 'main_filter' defines the y-coordinate (ordinate) of the CMD
-#       -> the second filter from the 'filter_list'
-#           -> is used to calculate the color
-#           -> defines the x-coordinate (abscissa) of the CMD
-#           -> multiple entries in the list result in the creation of
-#              multiple CMDs
-main_filter = 'V'  # currently only 'V' is supported
-filter_list = [
-    # 'U',
-    'B',
-    # 'R',
-    # 'I',
+#   List of colors to be plotted in the CMDs. The color filters must be
+#   specified with a dash between them, such as B-V. The second filter will be
+#   the magnitude plotted on the ordinate while the color is plotted on the
+#   abscissa. (B-V) means that V is plotted against B-V. Multiple entries in
+#   the list result in the generation of multiple CMDs.
+filter_color_combinations = [
+    "B-V",
 ]
 
 ###
 #   Calibration parameter
 #
-#   Calibration factor/zero point of the filter
-cali = {
-    'B': 0,
-    'V': 0.,
-}
-
 #   E_B-V of the cluster
 eB_V = 0.
 
@@ -60,15 +48,16 @@ distance = '?'
 #   Plot parameter
 #
 
-#   x_Range=[xRangeMin:xRangeMax] & y_Range=[yRangeMin:yRangeMax]
-#       -> x and y range to plot (change according to your data)
-#       -> The plot range is automatically adjusted, if range is set to ""
+#   X and Y range to plot (change according to your data)
+#       - Plot range is automatically adjusted if range is set to ""
+#       - Example for 2 CMD plots aka 3 available filters:
+#           x_plot_range_apparent = [(0., 2.), (-1., 1.)]
 #   Apparent CMD:
-x_plot_range_apparent = ["", ""]
-y_plot_range_apparent = ["", ""]
+x_plot_range_apparent = [("", ""), ]
+y_plot_range_apparent = [("", ""), ]
 #   Absolute CMD:
-x_plot_range_absolute = ["", ""]
-y_plot_range_absolute = ["", ""]
+x_plot_range_absolute = [("", ""), ]
+y_plot_range_absolute = [("", ""), ]
 
 #   Size of the output figure in cm, default 8cm x 8cm
 figure_size_x = "?"
@@ -82,7 +71,7 @@ file_name = "cmd"
 file_type = "pdf"
 
 #   Output directory
-output_dir = "output/"
+output_dir = "output"
 
 #   Plot error bars?
 # do_error_bars = True
@@ -126,7 +115,6 @@ from astropy.table import Table
 
 from ost_photometry.analyze import plot, utilities
 from ost_photometry.style import Bcolors
-
 from ost_photometry import checks
 from ost_photometry import utilities as base_utilities
 
@@ -160,30 +148,29 @@ if __name__ == '__main__':
         )
         sys.exit()
 
-    #   Check variables
-    file_name, file_type = utilities.check_variable_apparent_cmd(
-        file_name,
-        file_type,
-        main_filter,
-        filter_list,
-        cali,
-    )
-
     #   Loop over all CMDs/colors
-    for second_filer in filter_list:
-        #   Extract data
-        magnitude_filter_1 = tbl_cmd[f'{main_filter} [mag]'].value
-        magnitude_filter_2 = tbl_cmd[f'{second_filer} [mag]'].value
+    for filter_id, color in enumerate(filter_color_combinations):
+        filter_list = color.split('-')
+        filter_1 = filter_list[0]
+        filter_2 = filter_list[1]
 
-        #   Apply zero point
-        magnitude_filter_1 = magnitude_filter_1 + cali[main_filter]
-        magnitude_filter_2 = magnitude_filter_2 + cali[second_filer]
-        color = magnitude_filter_2 - magnitude_filter_1
+        #   Check variables
+        file_name, file_type = utilities.check_variable_apparent_cmd(
+            file_name,
+            file_type,
+        )
+
+        #   Extract data
+        magnitude_filter_1 = tbl_cmd[f'{filter_1} [mag]'].value
+        magnitude_filter_2 = tbl_cmd[f'{filter_2} [mag]'].value
+
+        #   Calculate color
+        color = magnitude_filter_1 - magnitude_filter_2
 
         #   Get errors
         if do_error_bars:
-            magnitude_filter_1_err = tbl_cmd[f'{main_filter}_err'].value
-            magnitude_filter_2_err = tbl_cmd[f'{second_filer}_err'].value
+            magnitude_filter_1_err = tbl_cmd[f'{filter_1}_err'].value
+            magnitude_filter_2_err = tbl_cmd[f'{filter_2}_err'].value
             color_err = utilities.err_prop(
                 magnitude_filter_1_err,
                 magnitude_filter_2_err
@@ -196,29 +183,33 @@ if __name__ == '__main__':
         #   Plot CMD
         #
         print(
-            f'{Bcolors.BOLD}   Create {Bcolors.UNDERLINE} apparent'
-            f'{Bcolors.ENDC}{Bcolors.BOLD}  CMD ({main_filter} vs. '
-            f'{second_filer}-{main_filter}){Bcolors.ENDC}'
+            f'{Bcolors.BOLD}   Create {Bcolors.UNDERLINE}apparent'
+            f'{Bcolors.ENDC}{Bcolors.BOLD} CMD: {filter_2} vs. '
+            f'{filter_1}-{filter_2}{Bcolors.ENDC}'
         )
 
-        #   Plot apparent CMD
-        plot.plot_apparent_cmd(
-            color,
-            magnitude_filter_1,
+        #   Setup CMD object
+        cmds = plot.MakeCMDs(
             name_of_star_cluster,
             file_name,
             file_type,
-            main_filter,
-            second_filer,
+            filter_2,
+            filter_1,
+            color,
+            magnitude_filter_2,
+            color_err=color_err,
+            magnitude_filter_2_err=magnitude_filter_2_err,
+            output_dir=output_dir,
+        )
+
+        #   Plot apparent CMD
+        cmds.plot_apparent_cmd(
             figure_size_x=figure_size_x,
             figure_size_y=figure_size_y,
-            y_plot_range_max=y_plot_range_apparent[1],
-            y_plot_range_min=y_plot_range_apparent[0],
-            x_plot_range_max=x_plot_range_apparent[1],
-            x_plot_range_min=x_plot_range_apparent[0],
-            output_dir=output_dir,
-            magnitude_filter_1_err=magnitude_filter_1_err,
-            color_err=color_err,
+            y_plot_range_max=y_plot_range_apparent[filter_id][1],
+            y_plot_range_min=y_plot_range_apparent[filter_id][0],
+            x_plot_range_max=x_plot_range_apparent[filter_id][1],
+            x_plot_range_min=x_plot_range_apparent[filter_id][0],
         )
 
         #   Check if the absolute CMD can be calculated
@@ -228,18 +219,15 @@ if __name__ == '__main__':
             else:
                 m_M = 0.
 
-        if eB_V != 0. and m_M != 0.:
-            print('')
+        if m_M != 0.:
             print(
-                f'\n{Bcolors.BOLD}   Create {Bcolors.UNDERLINE}absolute'
-                f'{Bcolors.ENDC}{Bcolors.BOLD} CMD ({main_filter} vs. '
-                f'{second_filer}-{main_filter}){Bcolors.ENDC}'
+                f'{Bcolors.BOLD}   Create {Bcolors.UNDERLINE}absolute'
+                f'{Bcolors.ENDC}{Bcolors.BOLD} CMD: {filter_2} vs. '
+                f'{filter_1}-{filter_2}{Bcolors.ENDC}'
             )
 
             #   Read file with isochrone specification
-            isochrone_configuration = base_utilities.read_params_from_yaml(
-                isochrone_configuration_file
-            )
+            isochrone_configuration = base_utilities.read_params_from_yaml(isochrone_configuration_file)
             if isochrone_configuration:
                 isochrones = isochrone_configuration.get('isochrones', '')
                 isochrone_type = isochrone_configuration['isochrone_type']
@@ -251,7 +239,6 @@ if __name__ == '__main__':
 
                 #   Check isochrone parameters
                 utilities.check_variable_absolute_cmd(
-                    main_filter,
                     filter_list,
                     isochrone_column_type,
                     isochrone_column,
@@ -261,20 +248,10 @@ if __name__ == '__main__':
                 isochrone_column, isochrone_keyword = '', ''
                 isochrone_log_age, isochrone_legend = '', ''
 
-            #   Correct for reddening and distance
-            AV = RV * eB_V
-            magnitude_filter_1 = magnitude_filter_1 - AV - m_M
-            mag_color = color - eB_V
-
             #   Plot absolute CMD with isochrones
-            plot.plot_absolute_cmd(
-                mag_color,
-                magnitude_filter_1,
-                name_of_star_cluster,
-                file_name,
-                file_type,
-                main_filter,
-                second_filer,
+            cmds.plot_absolute_cmd(
+                eB_V,
+                m_M,
                 isochrones,
                 isochrone_type,
                 isochrone_column_type,
@@ -282,15 +259,13 @@ if __name__ == '__main__':
                 isochrone_log_age,
                 isochrone_keyword,
                 isochrone_legend,
+                rv=RV,
                 figure_size_x=figure_size_x,
                 figure_size_y=figure_size_y,
-                y_plot_range_max=y_plot_range_absolute[1],
-                y_plot_range_min=y_plot_range_absolute[0],
-                x_plot_range_max=x_plot_range_absolute[1],
-                x_plot_range_min=x_plot_range_absolute[0],
-                output_dir=output_dir,
-                magnitude_filter_1_err=magnitude_filter_1_err,
-                color_err=color_err,
+                y_plot_range_max=y_plot_range_absolute[filter_id][1],
+                y_plot_range_min=y_plot_range_absolute[filter_id][0],
+                x_plot_range_max=x_plot_range_absolute[filter_id][1],
+                x_plot_range_min=x_plot_range_absolute[filter_id][0],
             )
 
     print(f'{Bcolors.OKGREEN}   Done{Bcolors.ENDC}')
@@ -317,4 +292,7 @@ if __name__ == '__main__':
     * 31.08.2022
         - Add error bars
         - Add additional isochrones
+    * 13.03.2024
+        - Switch from function-based CMD plotting to class-based plotting
+        - Removed calibration parameter
 """

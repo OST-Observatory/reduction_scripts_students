@@ -12,16 +12,28 @@ isochrones: ''
 #                          isochrones
 isochrone_type: '?'
 
-#   Type of the second filter used in CMD plots
-#       -> Can be either 'color' or 'single'
-#       -> Needs to be given as a python dictionary
-#           -> isochrone_column_type = {'B':'color'} if 'B-V'
-#              vs.
-#              isochrone_column_type = {'B':'single'} if 'B'
-#           -> Can contain several entries, if more than one CMD should be
-#              plotted
+#   Type of the filter used in CMD plots
+#   Format:
+#     'filter name':
+#       - column type (simgle or color)
+#       - ID of the filter if the column type is color, e.g., if the filter is
+#         R and the color is V-R, the filter ID would be 1. If column-type is
+#         single, the ID will be 0.
+#       - name of the second filter, in the example above it would be V. If 
+#         column-type is single, the name can be set to '-'.
 isochrone_column_type:
-    'B': '?'
+    'B': 
+      - 'color'
+      - 0
+      - 'V'
+    'V':
+      - 'single'
+      - 0
+      - '-'
+    '?':
+      - '?'
+      - ?
+      - '?'
 
 #   ID of the columns in the isochrone data file containing the magnitudes
 #   and the age

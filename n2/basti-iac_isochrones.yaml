@@ -9,14 +9,44 @@ isochrones: "~/isochrone_database/basti-iac/FEHm155/1Gyr/"
 #   Type
 isochrone_type: 'directory'
 
-#   Type of the second filter used in CMD plots
+#   Type of the filter used in CMD plots
+#   Format:
+#     'filter name':
+#       - column type (simgle or color)
+#       - ID of the filter if the column type is color, e.g., if the filter is
+#         R and the color is V-R, the filter ID would be 1. If column-type is
+#         single, the ID will be 0.
+#       - name of the second filter, in the example above it would be V. If
+#         column-type is single, the name can be set to '-'.
 isochrone_column_type:
-    'B': 'single'
-    'R': 'single'
-    'I': 'single'
-    'J': 'single'
-    'H': 'single'
-    'K': 'single'
+    'V': 
+      - 'single'
+      - 0
+      - '-'
+    'B': 
+      - 'single'
+      - 0
+      - '-'
+    'R': 
+      - 'single'
+      - 0
+      - '-'
+    'I': 
+      - 'single'
+      - 0
+      - '-'
+    'J': 
+      - 'single'
+      - 0
+      - '-'
+    'H': 
+      - 'single'
+      - 0
+      - '-'
+    'K': 
+      - 'single'
+      - 0
+      - '-'
 
 #   ID of the columns in the isochrone data file containing the magnitudes
 #   and the age

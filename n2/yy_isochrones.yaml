@@ -19,7 +19,7 @@ isochrone_type: 'file'
 #   Type of the filter used in CMD plots
 #   Format:
 #     'filter name':
-#       - column type (simgle or color)
+#       - column type (single or color)
 #       - ID of the filter if the column type is color, e.g., if the filter is
 #         R and the color is V-R, the filter ID would be 1. If column-type is
 #         single, the ID will be 0.

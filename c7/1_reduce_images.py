@@ -53,6 +53,9 @@ rm_cosmic_rays = True
 #   Tolerance between science and dark exposure times in s
 exposure_time_tolerance = 4.
 
+#   Tolerance between the camera chip temperatures of the images
+temperature_tolerance = 5.
+
 
 ############################################################################
 #                               Libraries                                  #
@@ -102,6 +105,7 @@ if __name__ == '__main__':
         exposure_time_tolerance=exposure_time_tolerance,
         stack_images=False,
         shift_all=True,
+        temperature_tolerance=temperature_tolerance,
         )
 
 """

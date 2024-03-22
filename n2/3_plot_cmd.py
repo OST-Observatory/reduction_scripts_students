@@ -176,7 +176,7 @@ if __name__ == '__main__':
                 magnitude_filter_2_err
             )
         else:
-            magnitude_filter_1_err = None
+            magnitude_filter_2_err = None
             color_err = None
 
         ###

@@ -235,7 +235,7 @@ def master_image(path, output_path, image_type, flip_bool=False,
 
     #   Divide by flat
     if divide_flat:
-        terminal_output.print_terminal(
+        terminal_output.print_to_terminal(
             "Divide by master flat",
             indent=2,
         )
@@ -255,7 +255,7 @@ def master_image(path, output_path, image_type, flip_bool=False,
 
             #   Save the result
             img_path = output_path / image_type / 'flat-fielded'
-            checks.check_out(img_path)
+            checks.check_output_directories(img_path)
             img.write(img_path / file_name, overwrite=True)
 
         #   Reload images

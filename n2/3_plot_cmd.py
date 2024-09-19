@@ -113,7 +113,7 @@ import numpy as np
 
 from astropy.table import Table
 
-from ost_photometry.analyze import plot, utilities
+from ost_photometry.analyze import plots, utilities
 from ost_photometry.style import Bcolors
 from ost_photometry import checks
 from ost_photometry import utilities as base_utilities
@@ -189,7 +189,7 @@ if __name__ == '__main__':
         )
 
         #   Setup CMD object
-        cmds = plot.MakeCMDs(
+        cmds = plots.MakeCMDs(
             name_of_star_cluster,
             file_name,
             file_type,

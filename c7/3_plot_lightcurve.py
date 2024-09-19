@@ -44,7 +44,7 @@ binning_factor = 0.0001
 #                               Libraries                                  #
 ############################################################################
 
-from ost_photometry.analyze import plot
+from ost_photometry.analyze import plots
 
 from astropy.timeseries import TimeSeries
 
@@ -62,16 +62,16 @@ if __name__ == '__main__':
     )
 
     #   Plot light curve over JD
-    plot.light_curve_jd(
+    plots.light_curve_jd(
         ts,
         filter_,
         f"{filter_}_err",
         output_dir,
-        name_obj=name_star,
+        name_object=name_star,
     )
 
     #   Plot the light curve folded on the period
-    plot.light_curve_fold(
+    plots.light_curve_fold(
         ts,
         filter_,
         f"{filter_}_err",
@@ -79,5 +79,5 @@ if __name__ == '__main__':
         transit_time,
         period,
         binning_factor=binning_factor,
-        name_obj=name_star,
+        name_object=name_star,
     )

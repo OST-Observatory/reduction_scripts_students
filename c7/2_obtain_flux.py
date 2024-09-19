@@ -196,14 +196,14 @@ separation_limit = 5.
 
 #   Limit for the number of images on which an object is not found.
 #   When this limit is reached, the corresponding object is discarded.
-n_allowed_non_detections_object = 10
+n_allowed_non_detections_object = 5
 
 ############################################################################
 #   Light curve options
 #
 #   Binning in days (set to None to deactivate)
-binning_factor = 0.0001
-binning_factor = 0.0002
+# binning_factor = 0.0001
+# binning_factor = 0.0002
 binning_factor = None
 
 ############################################################################
@@ -241,28 +241,31 @@ if __name__ == '__main__':
             sigma_object_psf[locals()['filter_' + str(i)]] = sigma
 
     ###
-    #   Initialize image ensemble container
+    #   Initialize observation container
     #
-    img_container = analyze.ImageContainer()
+    observation = analyze.Observation(
+        ra_objects=[ra_star],
+        dec_objects=[dec_star],
+        object_names=[name_star],
+        ra_unit=u.hourangle,
+        dec_unit=u.deg,
+        transit_times=[transit_time],
+        periods=[period],
+    )
 
     ###
     #   Extract flux
     #
-    analyze.extract_flux_multi(
-        img_container,
+    observation.extract_flux_multi(
         filter_list,
-        name_star,
         image_paths,
         output_dir,
         sigma_object_psf,
-        ra_star,
-        dec_star,
         photometry_extraction_method=photometry_extraction_method,
         radius_aperture=radius_aperture,
         inner_annulus_radius=inner_annulus_radius,
         outer_annulus_radius=outer_annulus_radius,
         radii_unit=radii_unit,
-        reference_image_id=reference_image_id,
         n_allowed_non_detections_object=n_allowed_non_detections_object,
         separation_limit=separation_limit * u.arcsec,
         # correlation_method='own',
@@ -270,17 +273,10 @@ if __name__ == '__main__':
 
     ###
     #   Calibrate data and plot light curves
-    analyze.calibrate_data_mk_light_curve(
-        img_container,
+    observation.calibrate_data_mk_light_curve(
         filter_list,
-        ra_star,
-        dec_star,
-        name_star,
         output_dir,
-        transit_time,
-        period,
         binning_factor=binning_factor,
-        reference_image_id=reference_image_id,
         calibration_method=calibration_method,
         n_allowed_non_detections_object=n_allowed_non_detections_object,
         photometry_extraction_method=photometry_extraction_method,
@@ -288,6 +284,7 @@ if __name__ == '__main__':
         # correlation_method='own',
         plot_sigma=True,
         # derive_transformation_coefficients=True,
+        calculate_zero_point_statistic=False,
     )
 
     print(style.Bcolors.OKGREEN + "   Done" + style.Bcolors.ENDC)

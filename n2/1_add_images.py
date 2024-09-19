@@ -22,7 +22,7 @@
 ############################################################################
 #   PLEASE NOTE: Either specify a single directory with all raw files at
 #                this point, or use the directory structure shown below.
-raw_files = '?'
+raw_files: str = '?'
 
 ############################################################################
 #                           Individual folders                             #
@@ -31,16 +31,16 @@ raw_files = '?'
 #   single directory with all raw files above.
 
 # Path to the bias -- If set to '?', bias exposures are not used.
-bias = '?'
+bias: str = '?'
 
 # Path to the darks
-darks = '?'
+darks: str = '?'
 
 # Path to the flats
-flats = '?'
+flats: str = '?'
 
 # Path to the images
-images = '?'
+images: str = '?'
 
 
 ############################################################################
@@ -51,21 +51,24 @@ images = '?'
 #   Only set target if you want to filter the cluster images by the target
 #   name. For this to work, the target name must appear as a FITS header
 #   keyword.
-target_name = None
+target_name: str | None = None
 
 #   Path to store the output (will usually be 'output',
 #   but it can be changed as needed).
-output_dir = 'output/'
+output_dir: str = 'output/'
 
 #   Remove cosmic rays?
-rm_cosmic_rays = True
-# rm_cosmic_rays = False
+rm_cosmic_rays: bool = True
+# rm_cosmic_rays: bool = False
 
 #   Tolerance between science and dark exposure times in s
-exposure_time_tolerance = 5.
+exposure_time_tolerance: float = 5.
 
 #   Tolerance between the camera chip temperatures of the images
-temperature_tolerance = 5.
+temperature_tolerance: float = 5.
+
+#   Number of cores used for multiprocessing
+n_cores_multiprocessing: int = 4
 
 
 ############################################################################
@@ -104,7 +107,7 @@ if __name__ == '__main__':
         images,
         raw_files,
         temp_dir,
-        )
+    )
 
     ###
     #   Reduce images
@@ -116,7 +119,8 @@ if __name__ == '__main__':
         exposure_time_tolerance=exposure_time_tolerance,
         target_name=target_name,
         temperature_tolerance=temperature_tolerance,
-        )
+        n_cores_multiprocessing=n_cores_multiprocessing,
+    )
 
 """
     Change Log

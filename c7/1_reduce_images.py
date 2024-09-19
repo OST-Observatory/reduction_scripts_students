@@ -20,22 +20,22 @@
 ############################################################################
 #                          Simple folder structure                         #
 ############################################################################
-raw_files = '?'
+raw_files: str = '?'
 
 ############################################################################
 #                              Individual folders                          #
 ############################################################################
 # Path to the bias -- If set to '?', bias exposures are not used.
-bias = '?'
+bias: str = '?'
 
 # Path to the darks
-darks = '?'
+darks: str = '?'
 
 # Path to the flats
-flats = '?'
+flats: str = '?'
 
 # Path to the images
-images = '?'
+images: str = '?'
 
 
 ############################################################################
@@ -44,18 +44,20 @@ images = '?'
 
 #   Path to store the output (will usually be 'output',
 #   but it can be changed as needed).
-output_dir = 'output/'
+output_dir: str = 'output/'
 
 #   Remove cosmic rays?
-rm_cosmic_rays = True
-# rm_cosmic_rays = False
+rm_cosmic_rays: bool = True
+# rm_cosmic_rays: bool = False
 
 #   Tolerance between science and dark exposure times in s
-exposure_time_tolerance = 4.
+exposure_time_tolerance: float = 4.
 
 #   Tolerance between the camera chip temperatures of the images
-temperature_tolerance = 5.
+temperature_tolerance: float = 5.
 
+#   Number of cores used for multiprocessing
+n_cores_multiprocessing: int = 4
 
 ############################################################################
 #                               Libraries                                  #
@@ -93,7 +95,7 @@ if __name__ == '__main__':
         images,
         raw_files,
         temp_dir,
-        )
+    )
 
     ###
     #   Reduce images
@@ -106,7 +108,8 @@ if __name__ == '__main__':
         stack_images=False,
         shift_all=True,
         temperature_tolerance=temperature_tolerance,
-        )
+        n_cores_multiprocessing=n_cores_multiprocessing,
+    )
 
 """
     Change Log

@@ -18,15 +18,15 @@ declination                         = '+?deg ?m ?s'      #in deg | arcmin |arcse
 ##### Observation time #####
 
 observation_date                    = '????-??-?? ??:??:??' #enter the observation date formatted as 'YYYY-MM-DD HH:MM:SS'. Be careful, to enter the correct day if observations were made past midnight!
-time_zone                           = ?                    #type +1 for the central european time zone or +2 when time was switched to daylight saving
+time_zone                           = '?'                    #type +1 for the central european time zone or +2 when time was switched to daylight saving
 
 
 
 ##### Observatory #####
 
-observatory_latitude                = ?                    #values in degrees, north is positive
-observatory_longitude               = ?                    #values in degrees, east is positive
-observatory_height_above_MSL        = ?                    #enter in meter
+observatory_latitude                = '?'                    #values in degrees, north is positive
+observatory_longitude               = '?'                    #values in degrees, east is positive
+observatory_height_above_MSL        = '?'                    #enter in meter
 ##################################################################################
 
 

@@ -30,12 +30,17 @@ period: float = '?'
 #   Filter
 filter_: str = '?'
 
+#   Color - Format "filter_1-filter_2" such as "B-V", can also be '' or None
+color: str = '?-?'
+
 #   Path to store the output (will usually be 'output',
 #   but it can be changed as needed).
-output_dir: str = 'output/'
+output_dir: str = 'output'
 
 #   Light curve file name
-file_name: str = f'{output_dir}/tables/light_curve_{filter_}.csv'
+if color is not None or color != '':
+    color = f'_{color}'
+file_name: str = f'{output_dir}/tables/light_curve_{name_star.replace(" ", "_")}_{filter_}{color}.csv'
 
 #   Binning in days
 binning_factor: float = 0.0001

@@ -13,20 +13,20 @@
 ############################################################################
 
 #   Name of the star cluster
-name_of_star_cluster = "?"
+name_of_star_cluster: str = "?"
 
 ###
 #   Parameters regarding the file, containing the CMD data
 #
 #   Name of CMD data file
-cmd_file_name = "?/cmd.dat"
+cmd_file_name: str = "?/cmd.dat"
 
 #   List of colors to be plotted in the CMDs. The color filters must be
 #   specified with a dash between them, such as B-V. The second filter will be
 #   the magnitude plotted on the ordinate while the color is plotted on the
 #   abscissa. (B-V) means that V is plotted against B-V. Multiple entries in
 #   the list result in the generation of multiple CMDs.
-filter_color_combinations = [
+filter_color_combinations: list[str] = [
     "B-V",
 ]
 
@@ -34,15 +34,15 @@ filter_color_combinations = [
 #   Calibration parameter
 #
 #   E_B-V of the cluster
-eB_V = 0.
+eB_V: float = 0.
 
 #   R_V
-RV = 3.1
+RV: float = 3.1
 
 #   Give either distance modulus of the cluster or the distance in kpc
-m_M = '?'
+m_M: str | float = '?'
 
-distance = '?'
+distance: str | float = '?'
 
 ###
 #   Plot parameter
@@ -53,29 +53,29 @@ distance = '?'
 #       - Example for 2 CMD plots aka 3 available filters:
 #           x_plot_range_apparent = [(0., 2.), (-1., 1.)]
 #   Apparent CMD:
-x_plot_range_apparent = [("", ""), ]
-y_plot_range_apparent = [("", ""), ]
+x_plot_range_apparent: list[tuple[str | float, str | float]] = [("", ""), ]
+y_plot_range_apparent: list[tuple[str | float, str | float]] = [("", ""), ]
 #   Absolute CMD:
-x_plot_range_absolute = [("", ""), ]
-y_plot_range_absolute = [("", ""), ]
+x_plot_range_absolute: list[tuple[str | float, str | float]] = [("", ""), ]
+y_plot_range_absolute: list[tuple[str | float, str | float]] = [("", ""), ]
 
 #   Size of the output figure in cm, default 8cm x 8cm
-figure_size_x = "?"
-figure_size_y = "?"
+figure_size_x: str | float = "?"
+figure_size_y: str | float = "?"
 
 #   Name of output file, default: "cmd"
-file_name = "cmd"
+file_name: str = "cmd"
 
 #   Filetype of output, supported filetypes:
 #       -> png, pdf, ps, eps, and svg - default: pdf
-file_type = "pdf"
+file_type: str = "pdf"
 
 #   Output directory
-output_dir = "output"
+output_dir: str = "output"
 
 #   Plot error bars?
-# do_error_bars = True
-do_error_bars = False
+# do_error_bars: bool = True
+do_error_bars: bool = False
 
 ############################################################################
 #         Isochrone configuration: modify the file in this section         #
@@ -86,20 +86,20 @@ do_error_bars = False
 #   -> Set YAML file
 #
 #   NO isochrones
-isochrone_configuration_file = ""
+isochrone_configuration_file: str = ""
 
 #   YY isochrones
-isochrone_configuration_file = 'yy_isochrones.yaml'
+isochrone_configuration_file: str = 'yy_isochrones.yaml'
 
 #   basti-iac isochrones -> [Fe/H]=−1.58, Z = 0.0004, Y = 0.2476, [α/Fe]=0,
 #   overshooting, diffusion, mass loss efficiency η = 0.3
-isochrone_configuration_file = 'basti-iac_isochrones.yaml'
+isochrone_configuration_file: str = 'basti-iac_isochrones.yaml'
 
 #   PARCES isochrones (CMD 3.6)
-isochrone_configuration_file = 'parsec_3p6_isochrones.yaml'
+isochrone_configuration_file: str = 'parsec_3p6_isochrones.yaml'
 
 #   PARCES isochrones (CMD 3.6, no TP-AGB evolution)
-isochrone_configuration_file = 'parsec_3p6_noTP-AGB_isochrones.yaml'
+isochrone_configuration_file: str = 'parsec_3p6_noTP-AGB_isochrones.yaml'
 
 ############################################################################
 #                               Libraries                                  #
@@ -122,7 +122,7 @@ from ost_photometry import utilities as base_utilities
 #                           Routines & definitions                         #
 ############################################################################
 
-matplotlib.rcParams['pdf.fonttype'] = 42
+matplotlib.rcParams['pdf.fonttype']: int = 42
 
 ############################################################################
 #                                  Main                                    #

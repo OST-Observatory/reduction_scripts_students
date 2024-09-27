@@ -51,7 +51,7 @@ rm_cosmic_rays: bool = True
 # rm_cosmic_rays: bool = False
 
 #   Tolerance between science and dark exposure times in s
-exposure_time_tolerance: float = 4.
+exposure_time_tolerance: float = 5.
 
 #   Tolerance between the camera chip temperatures of the images
 temperature_tolerance: float = 5.

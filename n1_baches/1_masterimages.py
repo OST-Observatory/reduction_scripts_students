@@ -14,52 +14,53 @@
 #   Path to the directories with the images
 #
 #   Darks:
-path_darks = '?'
+path_darks: str = '?'
 
 #   Flat darks:
-path_flat_darks = '?'
+path_flat_darks: str = '?'
 
 #   Flats:
-path_flats = '?'
+path_flats: str = '?'
 
 #   Thorium Argon exposures:
-path_thorium_argon = '?'
+path_thorium_argon: str = '?'
 
 #   Spectra:
-path_spectra = '?'
+path_spectra: str = '?'
 
 #   Output directory for the reduced flats. The master files will be saved in
 #   the current directory.
-out_path = 'output'
+out_path: str = 'output'
 
 ###
 #   Flip images? Possibilities: True and False
 #
-flip_images = False
-# flip_images = True
+flip_images: bool = False
+# flip_images: bool = True
 
 
 ###
 #   Bin the images? Possibilities: True and False
 #
-bin_images = False
-# bin_images = True
+bin_images: bool = False
+# bin_images: bool = True
+
 #   Binning factor
-binning_value = 2
+binning_value: int = 2
 
 ###
 #   Trim images to remove non-essential parts and thus simplify MIDAS handling
 #   Possibilities: True and False; Default: True
 #
-trim_image = True
+trim_image: bool = True
 
 #   Number of pixel to be removed from the start (''_s'') and end (''_e'')
 #   of the image in X (''_x_'') and Y (''_y_'') directory
 #   Typically, the default settings below do not need to be changed!
-trim_x_start = 400
-trim_x_end = 400
-trim_y_start = 300
-trim_y_end = 250
+trim_x_start: int = 400
+trim_x_end: int = 400
+trim_y_start: int = 300
+trim_y_end: int = 250
 
 ############################################################################
 #                               Libraries                                  #
@@ -302,7 +303,7 @@ if __name__ == '__main__':
     if path_spectra != '?':
         path_spectra = checks.check_pathlib_path(path_spectra)
     checks.check_output_directories(out_path)
-    out_path = Path(out_path)
+    out_path: Path = Path(out_path)
 
     ###
     #   Master dark

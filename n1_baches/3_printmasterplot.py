@@ -6,34 +6,34 @@
 ############################################################################
 
 #   Name of file with individual orders
-file_with_orders = "master_spectrum_wr.fit"
+file_with_orders: str = "master_spectrum_wr.fit"
 
 #   Name of file with merged spectrum
-file_with_merged_spectrum = "master_spectrum_wrm.fit"
+file_with_merged_spectrum: str = "master_spectrum_wrm.fit"
 
 #   Name of the object
-object_name = "star"
+object_name: str = "star"
 
 ###
 #   Radial velocity [km/s]
 #       The specification of the radial velocity is necessary for the
 #       line identification to work correctly (see below).
-radial_velocity = 0.
+radial_velocity: float = 0.
 
 ###
 #   Line identifications
 #
 #   Ions for which line markers are to be drawn.
 #   Example: ["HI", "FeI", ...]
-ions = []
+ions: list[str] = []
 
 #   Add lines that ar not in the line file
 #   Format: {"Element descriptor": [[wavelength, alignment parameter]]}
 #           alignment parameter possibilities: "center", "left", "right"
-manual_lines = {"Example Element": [[0., "center"]]}
+manual_lines: dict[str, list[list[float | str]]] = {"Example Element": [[0., "center"]]}
 
 #   Percent the line flux must be lower than the continuum
-percentage_line_flux_must_be_below_continuum = 3.
+percentage_line_flux_must_be_below_continuum: float = 3.
 
 ############################################################################
 #                Additional options: only edit if necessary                #
@@ -43,82 +43,82 @@ percentage_line_flux_must_be_below_continuum = 3.
 #   Extract individual orders and merge by means of PYTHON
 #   Possibilities: True or False
 #
-individual_orders = False
+individual_orders: bool = False
 
 ###
 #   Panel plot version
 #   Possibilities: `old` or `default`
 #
-panel_version = 'default'
-# panel_version = 'old'
+panel_version: str = 'default'
+# panel_version: str = 'old'
 
 #   Wavelength range (in Angstrom) for the panels in the plots
 #   (panel_version=old)
-panel_wave_range = 500
+panel_wave_range: float = 500.
 
 #   Number of panels on each page/plot
 #   (panel_version=default)
-n_panels_per_page = 5
+n_panels_per_page: int = 5
 
 #   Number of panels into which the spectrum should be split
 #   (panel_version=default)
-n_panels = 21
+n_panels: int = 21
 
 ###
 #   Normalization ?
 #   Possibilities: True or False
 #
-# normalize = False
-normalize = True
+# normalize: bool = False
+normalize: bool = True
 
 #   Normalization version
 #   Possibilities: `median_max_window` or `specutils_continuum`
 #   Default is `median_max_window`
-# norm_version = 'specutils_continuum'
-norm_version = 'median_max_window'
+# norm_version: str = 'specutils_continuum'
+norm_version: str = 'median_max_window'
 
 #   Normalize before merging of the orders
 #   Possibilities: True or False
 #   If `False` the orders will be merged first and the merged spectrum will
 #   be normalized afterward.
 #   (norm_version = specutils_continuum)
-norm_individual = False
-# norm_individual = True
+norm_individual: bool = False
+# norm_individual: bool = True
 
 #   Order of the polynomial used to normalize the spectra
 #   (norm_version = specutils_continuum)
-porder = 5
+porder: int = 5
 
 #   Wavelength window used to estimate continuum points
 #   (norm_version = specutils_continuum)
-median_window = 61
+median_window: int = 61
 
 #   Number of wavelength bins that should be removed from the beginning
 #   of the orders to improve flux normalization between the orders
-trim_value_start_order = 0
-# trim_value_start_order = 400
+trim_value_start_order: int = 0
+# trim_value_start_order: int = 400
 
 
 ###
 #   Line identifications
 #
 #   File containing line identifications
-# line_file = ""
-# line_file = "absorption_lines.dat"
-line_file = "/home/pollux/projects/reduction_scripts_students/n1_baches/atomic_lines.tsv"
+# line_file: str = ""
+# line_file: str = "absorption_lines.dat"
+line_file: str = "/home/pollux/projects/reduction_scripts_students/n1_baches/atomic_lines.tsv"
 
 ###
 #   Apply barycentric correction?
 #
-correct_bary = False
+correct_bary: bool = False
 
 ###
 #   Debug options
 #
 #   Debug plot: Creates a plot that can be used check order merging
 #   Possibilities: True or False
-debug_plot = False
-# debug_plot = True
+debug_plot: bool = False
+# debug_plot: bool = True
 
 
 ############################################################################

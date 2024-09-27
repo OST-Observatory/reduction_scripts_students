@@ -6,19 +6,19 @@
 ############################################################################
 
 #   Name of the variable star
-name_star = "?"
+name_star: str = "?"
 
 #   Coordinates - Format:  ra = hh:mm:ss e.g. 19:44:42.8539591894
 #                         dec = dd:am:as e.g. +54:49:42.887193554
-ra_obj = "??:??:??"
-dec_obj = "+??:??:??"
+ra_obj: str = "??:??:??"
+dec_obj: str = "+??:??:??"
 
 #   Date of the minimum (UTC)
 #   "yyyy:mm:ddThh:mm:ss" e.g., "2020-09-18T01:00:00"
-transit_time = "?"
+transit_time: str = "?"
 
 #   Period (Algol: p=2.867315d, RZ Cas: p=1.1952499d, TV Cas: p=1.81259d)
-period = '?'
+period: float = '?'
 
 ############################################################################
 #                Additional options: only edit if necessary                #
@@ -28,17 +28,17 @@ period = '?'
 #   Light curve parameters
 #
 #   Filter
-filter_ = '?'
+filter_: str = '?'
 
 #   Path to store the output (will usually be 'output',
 #   but it can be changed as needed).
-output_dir = 'output/'
+output_dir: str = 'output/'
 
 #   Light curve file name
-file_name = f'{output_dir}/tables/light_curve_{filter_}.csv'
+file_name: str = f'{output_dir}/tables/light_curve_{filter_}.csv'
 
 #   Binning in days
-binning_factor = 0.0001
+binning_factor: float = 0.0001
 
 ############################################################################
 #                               Libraries                                  #

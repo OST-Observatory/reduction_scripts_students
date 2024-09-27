@@ -105,7 +105,7 @@ trim_value_start_order = 0
 #   File containing line identifications
 # line_file = ""
 # line_file = "absorption_lines.dat"
-line_file = "/home/pollux/reduction_scripts_students/n1_baches/atomic_lines.tsv"
+line_file = "/home/pollux/projects/reduction_scripts_students/n1_baches/atomic_lines.tsv"
 
 ###
 #   Apply barycentric correction?

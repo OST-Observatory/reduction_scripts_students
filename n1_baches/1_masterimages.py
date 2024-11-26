@@ -22,6 +22,9 @@ path_flat_darks: str = '?'
 #   Flats:
 path_flats: str = '?'
 
+#   ThAr darks
+path_thar_darks: str = '?'
+
 #   Thorium Argon exposures:
 path_thorium_argon: str = '?'
 
@@ -31,6 +34,7 @@ path_spectra: str = '?'
 #   Output directory for the reduced flats. The master files will be saved in
 #   the current directory.
 out_path: str = 'output'
+
 
 ###
 #   Flip images? Possibilities: True and False
@@ -48,6 +52,7 @@ bin_images: bool = False
 #   Binning factor
 binning_value: int = 2
 
+
 ###
 #   Trim images to remove non-essential parts and thus simplify MIDAS handling
 #   Possibilities: True and False; Default: True
@@ -61,6 +66,14 @@ trim_x_start: int = 400
 trim_x_end: int = 400
 trim_y_start: int = 300
 trim_y_end: int = 250
+
+
+###
+#   Apply Flat correction?
+#
+apply_flat_calibration: bool = False
+# apply_flat_calibration: bool = True
+
 
 ############################################################################
 #                               Libraries                                  #
@@ -340,6 +353,23 @@ if __name__ == '__main__':
     )
 
     ###
+    #   Master ThAr dark
+    #
+    master_image(
+        path_thar_darks,
+        out_path,
+        flip_bool=flip_images,
+        bin_bool=bin_images,
+        binning_factor=binning_value,
+        trim_bool=trim_image,
+        trim_x_s=trim_x_start,
+        trim_x_e=trim_x_end,
+        trim_y_s=trim_y_start,
+        trim_y_e=trim_y_end,
+        image_type='thar_dark',
+    )
+
+    ###
     #   Master Thorium Argon
     #
     master_image(
@@ -354,6 +384,8 @@ if __name__ == '__main__':
         trim_y_s=trim_y_start,
         trim_y_e=trim_y_end,
         image_type='thar',
+        subtract_dark=True,
+        master_dark='master_thar_dark.fit',
     )
 
     ###
@@ -394,6 +426,6 @@ if __name__ == '__main__':
         image_type='spectrum',
         subtract_dark=True,
         master_dark='master_dark.fit',
-        # divide_flat=True,
-        # master_flat='master_flat.fit',
+        divide_flat=apply_flat_calibration,
+        master_flat='master_flat.fit',
     )

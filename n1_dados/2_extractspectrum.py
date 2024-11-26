@@ -178,21 +178,21 @@ setup_flat_image.close()
 if size_flatdark_x != size_flat_x or size_flatdark_y != size_flat_y:
     print(bcolors.FAIL + "   [ERROR] Flatdarks and Flatfields don't have the same size, check!" + bcolors.ENDC)
     print(
-        bcolors.FAIL + "   [ERROR] (" + size_flatdark_x + "x" + size_flatdark_y + ") and (" + size_flat_x + "x" + size_flat_y + ")" + bcolors.ENDC)
+        bcolors.FAIL + "   [ERROR] (" + str(size_flatdark_x) + "x" + str(size_flatdark_y) + ") and (" + str(size_flat_x) + "x" + str(size_flat_y) + ")" + bcolors.ENDC)
     print(bcolors.FAIL + "   [ERROR] ABORT" + bcolors.ENDC)
     sys.exit()
 
 if size_dark_x != size_flat_x or size_dark_y != size_flat_y:
     print(bcolors.FAIL + "   [ERROR] Flatdarks and Flatfields don't have the same size, check!" + bcolors.ENDC)
     print(
-        bcolors.FAIL + "   [ERROR] (" + size_flatdark_x + "x" + size_flatdark_y + ") and (" + size_flat_x + "x" + size_flat_y + ")" + bcolors.ENDC)
+        bcolors.FAIL + "   [ERROR] (" + str(size_flatdark_x) + "x" + str(size_flatdark_y) + ") and (" + str(size_flat_x) + "x" + str(size_flat_y) + ")" + bcolors.ENDC)
     print(bcolors.FAIL + "   [ERROR] ABORT" + bcolors.ENDC)
     sys.exit()
 
 if size_dark_x != size_science_x or size_dark_y != size_science_y:
     print(bcolors.FAIL + "   [ERROR] Flatdarks and Flatfields don't have the same size, check!" + bcolors.ENDC)
     print(
-        bcolors.FAIL + "   [ERROR] (" + size_flatdark_x + "x" + size_flatdark_y + ") and (" + size_flat_x + "x" + size_flat_y + ")" + bcolors.ENDC)
+        bcolors.FAIL + "   [ERROR] (" + str(size_flatdark_x) + "x" + str(size_flatdark_y) + ") and (" + str(size_flat_x) + "x" + str(size_flat_y) + ")" + bcolors.ENDC)
     print(bcolors.FAIL + "   [ERROR] ABORT" + bcolors.ENDC)
     sys.exit()
 
@@ -310,10 +310,12 @@ for line in calibfile:
     if lambdamin != '?' and float(liste[0]) < lambdamin:
         spec = spec[1:]
         spec2 = spec2[1:]
+        skyspec = skyspec[1:]
         continue
     if lambdamax != '?' and float(liste[0]) > lambdamax:
         spec = spec[:-1]
         spec2 = spec2[:-1]
+        skyspec = skyspec[:-1]
         continue
     wavelengthrange.append(float(liste[0]))
 
@@ -332,6 +334,9 @@ font = {'family': 'serif',
 plt.xlabel(r'$\lambda\,[\AA]$')
 plt.ylabel('Relative flux')
 
+# Remove sky spectrum from science spectrum
+spec = spec - skyspec
+
 # Setting plot ranges
 yoffset = (max(spec) - min(spec)) * 0.05
 pylab.ylim([min(spec) - yoffset, max(spec) + yoffset])
@@ -340,7 +345,8 @@ plotoffset = (float(max(wavelengthrange)) - float(min(wavelengthrange))) * 0.01
 pylab.xlim(min(wavelengthrange) - plotoffset, max(wavelengthrange) + plotoffset)
 
 # Plot the actual data
-plt.plot(wavelengthrange, spec - skyspec, 'b-')
+plt.plot(wavelengthrange, spec, 'b-')
+# plt.plot(wavelengthrange, spec - skyspec, 'b-')
 # plt.plot(wavelengthrange,spec2,'r-')
 # plt.show()
 
@@ -366,7 +372,7 @@ if plotident == 'yes' and lineFile != "":
         liste = line.split()
         if len(liste) == 1:
             print(
-                bcolors.WARNING + "     [WARNING] Broken identification found as '" + line + "', must consist of [wavelenght(s) + name]. I will skip this one." + bcolors.ENDC)
+                bcolors.WARNING + "     [WARNING] Broken identification found as '" + line + "', must consist of [wavelength(s) + name]. I will skip this one." + bcolors.ENDC)
             continue
         try:
             float(liste[0])
@@ -490,7 +496,6 @@ if plotident == 'yes' and lineFile != "":
     lines.close()
 
 # Write the plot file
-
 plt.savefig(spectrumfile, bbox_inches='tight')
 
 plt.clf()

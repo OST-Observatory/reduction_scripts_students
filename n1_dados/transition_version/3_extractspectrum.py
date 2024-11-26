@@ -6,7 +6,7 @@
 ##################################################################################
 
 #   Name of the object
-object_name: str = "T_CrB"
+object_name: str = "star"
 
 #   Radial velocity [km/s]
 #       The specification of the radial velocity is necessary for the
@@ -32,9 +32,8 @@ background_sky_end: int = 730
 #   Set the variables to '?' for an automatic resizing
 lambda_min: str | float = '?'
 lambda_max: str | float = '?'
-lambda_min: str | float = 4000.
-lambda_max: str | float = 8000.
-# lambda_max: str | float = 9500.
+# lambda_min: str | float = 4000.
+# lambda_max: str | float = 8000.
 
 
 ###

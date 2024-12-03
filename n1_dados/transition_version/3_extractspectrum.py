@@ -35,6 +35,10 @@ lambda_max: str | float = '?'
 # lambda_min: str | float = 4000.
 # lambda_max: str | float = 8000.
 
+flux_min: str | float = '?'
+flux_max: str | float = '?'
+# flux_min: str | float = -5
+# flux_max: str | float = 1e6
 
 ###
 #   Normalization ?
@@ -133,12 +137,15 @@ n_panels: int = 4
 # line_file: str = "absorption_lines.dat"
 line_file: str = "~/projects/reduction_scripts_students/n1_baches/atomic_lines.tsv"
 
+#   Add wavelength to idents
+add_wave_length_to_idents: bool = False
+
 
 ###
 #   Apply barycentric correction?
 #
 barycenter_correction: bool = False
-barycenter_correction: bool = True
+# barycenter_correction: bool = True
 
 
 ###
@@ -265,21 +272,27 @@ def extract_spectrum_data(
     return spectrum_1d
 
 
-def add_idents_fabian(lines_dict, x_plotting_limits, current_subplot):
+def add_idents_fabian(
+        lines_dict, x_plotting_limits, current_subplot,
+        add_wave_length_to_idents: bool = False):
     """
-        Add idents to the plot
+    Add idents to the plot
 
-        Parameters
-        ----------
-        lines_dict                   : `dictionary`
-            Line information: key=line identifier, value[0]=wavelength,
-                                                   value[1]=alignment parameter
+    Parameters
+    ----------
+    lines_dict                   : `dictionary`
+        Line information: key=line identifier, value[0]=wavelength,
+                                               value[1]=alignment parameter
 
-        x_plotting_limits            : `tuple`
-            Limits for the plot in X direction
+    x_plotting_limits            : `tuple`
+        Limits for the plot in X direction
 
-        current_subplot              : `matplotlib.pyplot.subplots`
-            Plot to which the idents should be added.
+    current_subplot              : `matplotlib.pyplot.subplots`
+        Plot to which the idents should be added.
+
+    add_wave_length_to_idents
+        Adds wave length to idents
+        Default is ``False``.
     """
     for line_identifier, line_locations in lines_dict.items():
         line_wave_lengths = [location[0] for location in line_locations]
@@ -300,11 +313,16 @@ def add_idents_fabian(lines_dict, x_plotting_limits, current_subplot):
 
                 #   Plot identifier
                 x_axis_transform = current_subplot.get_xaxis_transform()
+                if add_wave_length_to_idents:
+                    annotate_str = f"{line_identifier} {round(line_wave_length, 2)}"
+                else:
+                    annotate_str = line_identifier
                 current_subplot.annotate(
-                    line_identifier,
+                    annotate_str,
                     xy=(line_wave_length, 1.05),
                     xycoords=x_axis_transform,
                     ha=align_parameter,
+                    rotation='vertical',
                 )
                 current_subplot.axvline(
                     line_wave_length,
@@ -314,49 +332,53 @@ def add_idents_fabian(lines_dict, x_plotting_limits, current_subplot):
                 )
 
 
-def plot_panels_fabian(wave_length, flux, object_name, normalize,
-                       lines_to_mark, n_panels=21, merge_type='',
-                       radial_velocity=0., continuum=None,
-                       n_panels_per_page=5):
+def plot_panels_fabian(
+        wave_length, flux, object_name, normalize, lines_to_mark, n_panels=21,
+        merge_type='', radial_velocity=0., continuum=None, n_panels_per_page=5,
+        add_wave_length_to_idents: bool = False):
     """
-        Plot merged data in individual panels and create PDFs
+    Plot merged data in individual panels and create PDFs
 
-        Parameters
-        ----------
-        wave_length             : `numpy.ndarray`
-            Wavelength data
+    Parameters
+    ----------
+    wave_length             : `numpy.ndarray`
+        Wavelength data
 
-        flux                    : `numpy.ndarray`
-            Flux data
+    flux                    : `numpy.ndarray`
+        Flux data
 
-        object_name             : `string`
-            Name of the object
+    object_name             : `string`
+        Name of the object
 
-        normalize               : `boolean`
-            If `True`, it is assumed that the flux is normalized.
+    normalize               : `boolean`
+        If `True`, it is assumed that the flux is normalized.
 
-        lines_to_mark           : `dictionary`
-            Line information: key=line identifier, value[0]=wavelength,
-                                                   value[1]=alignment parameter
+    lines_to_mark           : `dictionary`
+        Line information: key=line identifier, value[0]=wavelength,
+                                               value[1]=alignment parameter
 
-        n_panels                : `integer`, optional
-            Number of panels that should be used to display the spectrum
-            Default is ``21``.
+    n_panels                : `integer`, optional
+        Number of panels that should be used to display the spectrum
+        Default is ``21``.
 
-        merge_type              : `string`, optional
-            String characterizing the merging procedure. It will be part of
-             the filename.
-            Default is ``''``.
+    merge_type              : `string`, optional
+        String characterizing the merging procedure. It will be part of
+         the filename.
+        Default is ``''``.
 
-        radial_velocity         : `float`, optional
-            Radial velocity
+    radial_velocity         : `float`, optional
+        Radial velocity
 
-        continuum               : `numpy.ndarray`
-            Flux data of the continuum
+    continuum               : `numpy.ndarray`
+        Flux data of the continuum
 
-        n_panels_per_page       : `integer`, optional
-            Number of panels on each page/plot.
-            Default is ``5``.
+    n_panels_per_page       : `integer`, optional
+        Number of panels on each page/plot.
+        Default is ``5``.
+
+    add_wave_length_to_idents
+        Adds wave length to idents
+        Default is ``False``.
     """
     print(
         f"      Plot individual panels:{Bcolors.OKBLUE} {object_name}"
@@ -468,7 +490,12 @@ def plot_panels_fabian(wave_length, flux, object_name, normalize,
             )
 
         #   Plot line identifier
-        add_idents_fabian(lines_to_mark, x_limit, axes[axis_index])
+        add_idents_fabian(
+            lines_to_mark,
+            x_limit,
+            axes[axis_index],
+            add_wave_length_to_idents=add_wave_length_to_idents,
+        )
 
         #   Save plot
         if i % n_panels_per_page == 0:
@@ -524,34 +551,48 @@ def plot_panels_fabian(wave_length, flux, object_name, normalize,
     merger.close()
 
 
-def plot_merged(wave_length_merged, flux_merged, object_name, normalize,
-                lines_to_mark, merge_type=''):
+def plot_merged(
+        wave_length_merged, flux_merged, object_name, normalize, lines_to_mark,
+        merge_type='', flux_min_plot: str | float = "?",
+        flux_max_plot: str | float = "?",
+        add_wave_length_to_idents: bool = False):
     """
-        Plot merged spectrum
+    Plot merged spectrum
 
-        Parameters
-        ----------
-        wave_length_merged      : `numpy.ndarray`
-            Wavelength data
+    Parameters
+    ----------
+    wave_length_merged      : `numpy.ndarray`
+        Wavelength data
 
-        flux_merged             : `numpy.ndarray`
-            Flux data
+    flux_merged             : `numpy.ndarray`
+        Flux data
 
-        object_name             : `string`
-            Name of the object
+    object_name             : `string`
+        Name of the object
 
-        normalize               : `boolean`
-            If `True`, it is assumed that the flux is normalized.
+    normalize               : `boolean`
+        If `True`, it is assumed that the flux is normalized.
 
-        lines_to_mark           : `dictionary`
-            Line information: key=line identifier, value[0]=wavelength,
-                                                   value[1]=alignment parameter
+    lines_to_mark           : `dictionary`
+        Line information: key=line identifier, value[0]=wavelength,
+                                               value[1]=alignment parameter
 
-        merge_type              : `string`, optional
-            String characterizing the merging procedure. It will be part of
-             the filename.
-            Default is ``''``.
+    merge_type              : `string`, optional
+        String characterizing the merging procedure. It will be part of
+         the filename.
+        Default is ``''``.
 
+    flux_min_plot
+        Minimum plot value for flux axis
+        Default is ``?``.
+
+    flux_max_plot
+        Maximum plot value for flux axis
+        Default is ``?``.
+
+    add_wave_length_to_idents
+        Adds wave length to idents
+        Default is ``False``.
     """
     print(
         f'      Plot total spectrum:{Bcolors.OKBLUE} {object_name}'
@@ -564,8 +605,8 @@ def plot_merged(wave_length_merged, flux_merged, object_name, normalize,
     figure = plt.figure(figsize=(11.69, 6.))
 
     #   Set plot range
-    flux_offset = (max(flux_merged) - min(flux_merged)) * 0.02
-    plt.ylim([min(flux_merged) - flux_offset, max(flux_merged) + flux_offset])
+    # flux_offset = (max(flux_merged) - min(flux_merged)) * 0.02
+    # plt.ylim([min(flux_merged) - flux_offset, max(flux_merged) + flux_offset])
     wave_length_offset = (max(wave_length_merged) - min(wave_length_merged)) * 0.02
     plt.xlim([
         min(wave_length_merged) - wave_length_offset,
@@ -584,15 +625,20 @@ def plot_merged(wave_length_merged, flux_merged, object_name, normalize,
     if normalize:
         plt.ylabel('Normalized flux')
 
-        #   Set plot range
+        #   Determine plot range
         min_flux = np.max([np.min(flux_merged) * 0.94, 0])
         max_flux = np.min([np.max(flux_merged) * 1.06, 2])
-        plt.ylim([min_flux, max_flux])
     else:
         plt.ylabel('Relative flux')
         min_flux = np.max([np.min(flux_merged) * 0.94, 0])
         max_flux = np.max(flux_merged) * 1.06
-        plt.ylim([min_flux, max_flux])
+
+    #   Set Y plot range
+    if flux_min_plot != "?" and flux_max_plot != "?":
+        min_flux = flux_min_plot
+        max_flux = flux_max_plot
+
+    plt.ylim([min_flux, max_flux])
 
     plt.tick_params(top=True, right=True, which='both', direction='in')
     plt.minorticks_on()
@@ -605,6 +651,7 @@ def plot_merged(wave_length_merged, flux_merged, object_name, normalize,
         lines_to_mark,
         (np.amin(wave_length_merged), np.amax(wave_length_merged)),
         plt.gca(),
+        add_wave_length_to_idents=add_wave_length_to_idents,
     )
 
     #   Save spectrum as PDF file
@@ -626,7 +673,8 @@ def plot_merged(wave_length_merged, flux_merged, object_name, normalize,
             f'output/spectrum_total_{object_name}.pdf'
         )
 
-    pp.savefig(figure, dpi=300, transparent=True)
+    # plt.show()
+    pp.savefig(figure, dpi=300, bbox_inches='tight', transparent=True)
     pp.close()
     plt.clf()
     plt.close()
@@ -1159,7 +1207,7 @@ def generate_lines_from_file(wave_length_array, flux, ion_list,
     """
     #   Interpolate on wavelength and flux to allow determination of flux
     #   level at the individual line positions
-    flux_interpolation_fit = interp1d(
+    flux_interpolation = interp1d(
         wave_length_array,
         flux,
         fill_value=1,
@@ -1169,7 +1217,7 @@ def generate_lines_from_file(wave_length_array, flux, ion_list,
     #   Read line file and restrict data to a reasonable range
     try:
         line_data = pd.read_csv(line_file, delimiter="\t")
-    except:
+    except FileNotFoundError:
         print(
             f"{Bcolors.WARNING}   Line file not found. Check variable "
             f"'lineFile'. Specified was {line_file}. {Bcolors.ENDC}"
@@ -1195,7 +1243,7 @@ def generate_lines_from_file(wave_length_array, flux, ion_list,
     for ion in ion_list:
         #   Restrict line data to current ion and the 25 strongest lines
         line_data_subset = line_data.loc[line_data["element"] == ion]
-        line_data_subset = line_data_subset.sort_values('loggf').tail(25)
+        # line_data_subset = line_data_subset.sort_values('loggf').tail(35)
 
         for _, row in line_data_subset.iterrows():
             #   Get line wavelength and index of closest wavelength in wave
@@ -1204,6 +1252,14 @@ def generate_lines_from_file(wave_length_array, flux, ion_list,
             line_index = np.argmin(
                 np.abs(wave_length_array - line_wave_length)
             )
+
+            #   Skip lines if the relative intensity is below a certain threshold
+            # try:
+            #     if float(row["intens"]) < 100.:
+            #         continue
+            # except ValueError:
+            #     continue
+
 
             #   Mean flux around line wavelength
             try:
@@ -1214,11 +1270,16 @@ def generate_lines_from_file(wave_length_array, flux, ion_list,
                 continue
 
             #   Skip weak (not deep) lines with except for of hydrogen lines
-            line_flux_criterion = ((100 - percentage_line_flux_must_be_below_continuum)
+            line_flux_criterion_absorption = ((100 - percentage_line_flux_must_be_below_continuum)
                                    / 100 * mean_flux_around_line)
-            if flux_interpolation_fit(line_wave_length) > line_flux_criterion:
+            line_flux_criterion_emission = ((100 + percentage_line_flux_must_be_below_continuum)
+                                   / 100 * mean_flux_around_line)
+            if line_flux_criterion_absorption < flux_interpolation(line_wave_length) < line_flux_criterion_emission:
                 if row["element"] != 'HI':
                     continue
+            # if flux_interpolation(line_wave_length) > line_flux_criterion_absorption:
+            #     if row["element"] != 'HI':
+            #         continue
 
             #   Remove/skip lines with the same wavelength if there is one
             #   with a larger gaunt factor
@@ -1307,8 +1368,8 @@ def generate_lines_from_file(wave_length_array, flux, ion_list,
 
             #   Identify close lines
             mask = np.logical_and(
-                line_wave_length_array > line_wave_length - 10,
-                line_wave_length_array < line_wave_length + 10
+                line_wave_length_array > line_wave_length - 20,
+                line_wave_length_array < line_wave_length + 20
             )
             if sum(mask) > 1:
                 other_lines_wave_length = line_wave_length_array[mask]
@@ -1461,7 +1522,7 @@ def bary_correction(fits_file):
     try:
         date = header['JD']
         observation_time = Time(date, format='jd', scale='utc')
-    except RuntimeError:
+    except KeyError:
         date = header['DATE-OBS']
         observation_time = Time(date, format='fits', scale='utc')
 
@@ -1533,7 +1594,11 @@ def main() -> None:
         normalized_flat = flat_flux / np.max(flat_flux)
         flux /= normalized_flat
 
-    #   Get data from distribution
+    #   Calculate the median over the range of extracted rows
+    # spectrum_1d = np.median(spectrum_2d, axis=0)
+    # flux = np.median(flux.distribution, axis=(0,2))
+
+    #   Collapse distribution
     flux = flux.pdf_median()
 
     print(Bcolors.BOLD + "   Perform wavelength calibration" + Bcolors.ENDC)
@@ -1561,8 +1626,8 @@ def main() -> None:
         )
         if norm_version == 'specutils_continuum':
             wavelength, flux = normalize_spectrum_interval(
-                wavelength,
-                flux,
+                wavelength << u.AA,
+                flux << u.ct,
                 median_window,
                 porder,
             )
@@ -1630,6 +1695,9 @@ def main() -> None:
         object_name,
         normalize,
         {**lines, **manual_lines},
+        flux_min_plot=flux_min,
+        flux_max_plot=flux_max,
+        add_wave_length_to_idents=add_wave_length_to_idents,
     )
 
     ###
@@ -1645,6 +1713,7 @@ def main() -> None:
         radial_velocity=radial_velocity,
         continuum=continuum,
         n_panels_per_page=n_panels_per_page,
+        add_wave_length_to_idents=add_wave_length_to_idents,
     )
 
 
@@ -1655,284 +1724,3 @@ def main() -> None:
 if __name__ == '__main__':
     main()
 
-#
-# # spectrum star
-# spec = []
-# # spectrum flatfield
-# spec2 = []
-# # Sky background spectrum
-# skyspec = []
-#
-# for i in range(0, len(sience_reduced_array[0])):
-#     spec_tmp, bg_tmp = 0, 0
-#     for j in range(spec_region_start, spec_region_end):
-#         spec_tmp += sience_reduced_array[j][i]
-#     # for k in range(bgRegionStart,bgRegionEnd):
-#     # bg_tmp += sience_reduced_array[k][i]
-#     spec_tmp /= abs((spec_region_end - spec_region_start))
-#     # bg_tmp /=  abs((bgRegionEnd-bgRegionStart))
-#     spec.append(spec_tmp - bg_tmp)
-
-# for i in range(0, len(flatfield_out_array[0])):
-#     spec_tmp, bg_tmp = 0, 0
-#     for j in range(spec_region_start, spec_region_end):
-#         spec_tmp += flatfield_out_array[j][i]
-#     # for k in range(bgRegionStart,bgRegionEnd):
-#     # bg_tmp += flatfield_out_array[k][i]
-#     spec_tmp /= abs((spec_region_end - spec_region_start))
-#     # bg_tmp /=  abs((bgRegionEnd-bgRegionStart))
-#     spec2.append(spec_tmp - bg_tmp)
-#
-# for i in range(0, len(sience_reduced_array[0])):
-#     skybg, bg_tmp = 0, 0
-#     for j in range(background_sky_start, background_sky_end):
-#         skybg += sience_reduced_array[j][i]
-#     # for k in range(bgRegionStart,bgRegionEnd):
-#     # bg_tmp += sience_reduced_array[k][i]
-#     skybg /= abs((background_sky_start - background_sky_end))
-#     # bg_tmp /=  abs((bgRegionEnd-bgRegionStart))
-#     skyspec.append(skybg - bg_tmp)
-#
-# print(bcolors.BOLD + "   Apply Flatfield correction to science spectrum" + bcolors.ENDC)
-#
-# # normalize the flatfield
-# spec2 = np.asarray(spec2) / max(spec2)
-# # apply flatfield to science spectrum and sky spectrum
-# spec = spec / spec2
-# skyspec = skyspec / spec2
-#
-# print(bcolors.BOLD + "   Perform wavelength calibration" + bcolors.ENDC)
-#
-# calibfile = open(calibration_file, 'r')
-# wavelengthrange = []
-# for line in calibfile:
-#     liste = line.split()
-#     if len(liste) == 0:
-#         continue
-#     if lambda_min != '?' and float(liste[0]) < lambda_min:
-#         spec = spec[1:]
-#         spec2 = spec2[1:]
-#         skyspec = skyspec[1:]
-#         continue
-#     if lambda_max != '?' and float(liste[0]) > lambda_max:
-#         spec = spec[:-1]
-#         spec2 = spec2[:-1]
-#         skyspec = skyspec[:-1]
-#         continue
-#     wavelengthrange.append(float(liste[0]))
-#
-# print(bcolors.BOLD + "   Create spectral plot " + bcolors.OKBLUE + spectrum_output_file + bcolors.ENDC)
-#
-# ### Plotting the spectrum ###
-# fig1 = plt.figure(figsize=(20, 10))
-#
-# font = {'family': 'serif',
-#         'color': 'red',
-#         'weight': 'normal',
-#         'size': 15,
-#         }
-#
-# # Setting plot labels
-# plt.xlabel(r'$\lambda\,[\AA]$')
-# plt.ylabel('Relative flux')
-#
-# # Remove sky spectrum from science spectrum
-# spec = spec - skyspec
-#
-# # Setting plot ranges
-# yoffset = (max(spec) - min(spec)) * 0.05
-# pylab.ylim([min(spec) - yoffset, max(spec) + yoffset])
-#
-# plotoffset = (float(max(wavelengthrange)) - float(min(wavelengthrange))) * 0.01
-# pylab.xlim(min(wavelengthrange) - plotoffset, max(wavelengthrange) + plotoffset)
-#
-# # Plot the actual data
-# plt.plot(wavelengthrange, spec, 'b-')
-# # plt.plot(wavelengthrange, spec - skyspec, 'b-')
-# # plt.plot(wavelengthrange,spec2,'r-')
-# # plt.show()
-#
-# # Setting plotpositions for ident lines
-# if plot_idents and line_file != "":
-#     plotminimum = min(spec) - yoffset
-#     plotmaximum = max(spec) + yoffset
-#     plotheigth = plotmaximum - plotminimum
-#     plotmiddleplot = (plotminimum + plotmaximum) / 2.0
-#     plotupperplot = plotminimum + 0.80 * plotheigth
-#     plotlowerplot = plotminimum + 0.20 * plotheigth
-#     plotuppercut1 = plotminimum + 0.70 * plotheigth
-#     plotlowercut1 = plotminimum + 0.30 * plotheigth
-#     plotuppercut2 = plotminimum + 0.68 * plotheigth
-#     plotlowercut2 = plotminimum + 0.32 * plotheigth
-#
-#     # interpolate on data to find point for ident
-#     f2 = interp1d(wavelengthrange, spec)
-#     lines = open(line_file, "r")
-#
-#     # plot idents to figure
-#     for line in lines:
-#         liste = line.split()
-#         if len(liste) == 1:
-#             print(
-#                 bcolors.WARNING + "     [WARNING] Broken identification found as '" + line + "', must consist of [wavelength(s) + name]. I will skip this one." + bcolors.ENDC)
-#             continue
-#         try:
-#             float(liste[0])
-#         except ValueError:
-#             print(
-#                 bcolors.WARNING + "     [WARNING] Broken identification found as '" + line + "', first entry not a number. I will skip this one." + bcolors.ENDC)
-#             continue
-#
-#         #   Single ident plot
-#         if len(liste) == 2:
-#             ident_line = liste
-#             wave_line = float(ident_line[0])
-#             if float(wave_line) >= min(wavelengthrange) and float(wave_line) <= max(wavelengthrange):
-#                 if f2(wave_line) <= plotmiddleplot:
-#                     plt.plot(
-#                         [wave_line, wave_line],
-#                         [plotupperplot, f2(wave_line)],
-#                         color='r',
-#                         linestyle='-',
-#                         linewidth=1.5,
-#                     )
-#                     plt.text(
-#                         wave_line,
-#                         plotupperplot,
-#                         ident_line[1],
-#                         rotation=90,
-#                         ha='center',
-#                         va='bottom',
-#                         fontdict=font,
-#                     )
-#                 else:
-#                     plt.plot(
-#                         [wave_line, wave_line],
-#                         [f2(wave_line), plotlowerplot],
-#                         color='r',
-#                         linestyle='-',
-#                         linewidth=1.5,
-#                     )
-#                     plt.text(
-#                         wave_line,
-#                         plotlowerplot,
-#                         ident_line[1],
-#                         rotation=90,
-#                         ha='center',
-#                         va='top',
-#                         fontdict=font,
-#                     )
-#         #   Multi ident plot
-#         if len(liste) > 2:
-#             points = []
-#             for i in liste[:-1]:
-#                 points.append(float(i))
-#             pointcenter = sum(points) / float(len(points))
-#             ident_name = str(liste[-1:])
-#             # print(points," give ",pointcenter," bei ",liste[-1:])
-#             if max(points) <= max(wavelengthrange) and min(points) >= min(wavelengthrange):
-#                 if f2(pointcenter) <= plotmiddleplot:
-#                     plt.plot(
-#                         [pointcenter, pointcenter],
-#                         [plotupperplot, plotuppercut1],
-#                         color='r',
-#                         linestyle='-',
-#                         linewidth=1.5,
-#                     )
-#                     plt.text(
-#                         pointcenter,
-#                         plotupperplot,
-#                         ident_name[2:-2],
-#                         rotation=90,
-#                         ha='center',
-#                         va='bottom',
-#                         fontdict=font,
-#                     )
-#                     for element in points:
-#                         plt.plot(
-#                             [element, element],
-#                             [f2(element), plotuppercut2],
-#                             color='r',
-#                             linestyle='-',
-#                             linewidth=1.5,
-#                         )
-#                         plt.plot(
-#                             [pointcenter, element],
-#                             [plotuppercut1, plotuppercut2],
-#                             color='r',
-#                             linestyle='-',
-#                             linewidth=1.5,
-#                         )
-#                 if f2(pointcenter) > plotmiddleplot:
-#                     plt.plot(
-#                         [pointcenter, pointcenter],
-#                         [plotlowerplot, plotlowercut1],
-#                         color='r',
-#                         linestyle='-',
-#                         linewidth=1.5,
-#                     )
-#                     plt.text(
-#                         pointcenter,
-#                         plotlowerplot,
-#                         ident_name[2:-2],
-#                         rotation=90,
-#                         ha='center',
-#                         va='top',
-#                         fontdict=font,
-#                     )
-#                     for element in points:
-#                         plt.plot(
-#                             [element, element],
-#                             [f2(element), plotlowercut2],
-#                             color='r',
-#                             linestyle='-',
-#                             linewidth=1.5,
-#                         )
-#                         plt.plot(
-#                             [pointcenter, element],
-#                             [plotlowercut1, plotlowercut2],
-#                             color='r',
-#                             linestyle='-',
-#                             linewidth=1.5,
-#                         )
-#     lines.close()
-#
-# # Write the plot file
-# plt.savefig(spectrum_output_file, bbox_inches='tight')
-#
-# plt.clf()
-#
-# ### Plotting the flatfield ###
-# fig2 = plt.figure(figsize=(20, 10))
-# # Setting plot labels
-# plt.xlabel(r'$\lambda\,[\AA]$')
-# plt.ylabel('Relative flux')
-#
-# # Setting plot ranges
-# yoffset = (max(spec2) - min(spec2)) * 0.05
-# pylab.ylim([min(spec2) - yoffset, max(spec2) + yoffset])
-#
-# plotoffset = (float(max(wavelengthrange)) - float(min(wavelengthrange))) * 0.01
-# pylab.xlim(min(wavelengthrange) - plotoffset, max(wavelengthrange) + plotoffset)
-#
-# # Plot the actual data
-# plt.plot(wavelengthrange, spec2, 'r-')
-#
-# print(bcolors.BOLD + "   Create flatfield plot " + bcolors.OKBLUE + 'flatfield.pdf' + bcolors.ENDC)
-#
-# # Write the plot file
-# plt.savefig('flatfield.pdf', bbox_inches='tight')
-#
-# print(bcolors.BOLD + "   Write spectrum to file " + bcolors.OKBLUE + spectrum_output_data_file + bcolors.ENDC)
-#
-# #   Write spectrum table
-# tbl = Table(names=['wave', 'flux', ], data=[wavelengthrange, spec, ])
-# tbl.write(spectrum_output_data_file, format='ascii', overwrite=True)
-#
-# # os.system('touch '+spectrumdata)
-# # specdatafile = open(spectrumdata,'w')
-#
-# # for i in range(len(wavelengthrange)):
-# # specdatafile.write( str(wavelengthrange[i]) + "   " +str(spec[i]))
-#
-# print(bcolors.OKGREEN + "   Done" + bcolors.ENDC)

@@ -22,11 +22,11 @@ path_flat_darks: str = '?'
 #   Flats:
 path_flats: str = '?'
 
-#   ThAr darks
-path_thar_darks: str = '?'
+#   Darks for wavelength calibration exposures:
+path_wavelength_darks: str = '?'
 
-#   Thorium Argon exposures:
-path_thorium_argon: str = '?'
+#   Wavelength calibration exposures:
+path_wavelength: str = '?'
 
 #   Spectra:
 path_spectra: str = '?'
@@ -311,7 +311,7 @@ if __name__ == '__main__':
     #
     path_darks = checks.check_pathlib_path(path_darks)
     path_flat_darks = checks.check_pathlib_path(path_flat_darks)
-    path_thorium_argon = checks.check_pathlib_path(path_thorium_argon)
+    path_wavelength = checks.check_pathlib_path(path_wavelength)
     path_flats = checks.check_pathlib_path(path_flats)
     if path_spectra != '?':
         path_spectra = checks.check_pathlib_path(path_spectra)
@@ -353,10 +353,10 @@ if __name__ == '__main__':
     )
 
     ###
-    #   Master ThAr dark
+    #   Master dark for wavelength calibration
     #
     master_image(
-        path_thar_darks,
+        path_wavelength_darks,
         out_path,
         flip_bool=flip_images,
         bin_bool=bin_images,
@@ -366,14 +366,14 @@ if __name__ == '__main__':
         trim_x_e=trim_x_end,
         trim_y_s=trim_y_start,
         trim_y_e=trim_y_end,
-        image_type='thar_dark',
+        image_type='wave_dark',
     )
 
     ###
-    #   Master Thorium Argon
+    #   Master wavelength calibration
     #
     master_image(
-        path_thorium_argon,
+        path_wavelength,
         out_path,
         flip_bool=flip_images,
         bin_bool=bin_images,
@@ -383,9 +383,9 @@ if __name__ == '__main__':
         trim_x_e=trim_x_end,
         trim_y_s=trim_y_start,
         trim_y_e=trim_y_end,
-        image_type='thar',
+        image_type='wave',
         subtract_dark=True,
-        master_dark='master_thar_dark.fit',
+        master_dark='master_wave_dark.fit',
     )
 
     ###

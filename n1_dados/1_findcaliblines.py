@@ -6,7 +6,7 @@
 ############################################################################
 
 #   Name of the file with the wavelength calibration spectrum
-calibFileName = "?.fit"
+calibFileName = "master_wave.fit"
 
 #   Region (rows on the image) containing the calibration spectrum
 specRegionStart = 476
@@ -24,7 +24,7 @@ bgRegionEnd = 870
 #   (width of emission lines in pixel)
 emissionlinewidth = 1.5
 #   Number of emission lines to look for
-emission_lines_to_find = 22
+emission_lines_to_find = 80
 
 #   Names of output files
 waveFile = "calibration_spectrum.dat"
@@ -32,43 +32,49 @@ outputwave = "calibration_fit.pdf"
 outputselect = "calibration_selection.pdf"
 
 #   Expected lines in calibration spectrum
-linelist = [3650.158,
-            4046.56,
-            4077.837,
-            4358.33,
-            5460.75,
-            5769.610,
-            5790.670,
-            6965.431,
-            7067.218,
-            7147.042,
-            7272.936,
-            7383.980,
-            7503.86,
-            7635.44,
-            7724.20,
-            7948.176,
-            8006.157,
-            8103.693,
-            8115.81,
-            8264.522,
-            8408.210,
-            8521.442,
-            8667.944,
-            # 9122.967,
-            ]
-
+#   Hg & Ar lamps
 linelist = [
-#     3948.98,
-    4158.59,
+    3650.158,
+    4046.56,
+    4077.837,
+    4358.33,
+    5460.75,
+    5769.610,
+    5790.670,
+    6965.431,
+    7067.218,
+    7147.042,
+    7272.936,
+    7383.980,
+    7503.86,
+    7635.44,
+    7724.20,
+    7948.176,
+    8006.157,
+    8103.693,
+    8115.81,
+    8264.522,
+    8408.210,
+    8521.442,
+    8667.944,
+    # 9122.967,
+]
+
+#   Ar & Ne lamps
+linelist = [
+#     4131.72
+#     4158.59,
     4200.67,
+    4259.36,
     4277.53,
-    4348.06,
-    # 4510.73,
-    4545.05,
+    # 4348.06,
+    4510.73,
+    # 4545.05,
     4609.57,
     4657.90,
     4764.87,
+    4861.35,
+    4879.86,
     5852.49,
     6143.06,
     6402.25,

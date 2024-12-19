@@ -19,14 +19,16 @@ dec_star: str = "??:??:??"
 
 ###
 #   Date of the minimum (UTC)
-#   "yyyy:mm:ddThh:mm:ss" e.g., "2020-09-18T01:00:00"
+#   "yyyy-mm-ddThh:mm:ss" e.g., "2020-09-18T01:00:00"
+#   This parameter is optional. Set it to '?' if unknown.
 #
-transit_time: str = "yyyy:mm:ddThh:mm:ss"
+transit_time: str = "?"
 
 ###
 #   Period (Algol: p=2.867315d, RZ Cas: p=1.1952499d, TV Cas: p=1.81259d)
+#   This parameter is optional. Set it to '?' if unknown.
 #
-period: float = '?'
+period: float | str = '?'
 
 
 ############################################################################
@@ -37,8 +39,8 @@ period: float = '?'
 ############################################################################
 #   Finder options
 #
-#   Set sigma -> characterizes the size of the diffraction patterns
-sigma:float = 3.0
+#   Set FWHM -> characterizes the size of the diffraction patterns
+fwhm: float | None = None
 
 ############################################################################
 #   Define filter 1 (e.g., U, B,V,...)
@@ -66,7 +68,7 @@ path_2: str = './output/B/'
 filter_3: str = 'R'
 
 ############################################################################
-#   Path to the images of filter 2
+#   Path to the images of filter 3
 #
 path_3: str = './output/R/'
 
@@ -169,7 +171,7 @@ calibration_method: str = 'APASS'
 
 
 #   Magnitude limit of the calibration stars
-mag_range: tuple[float, float] = (12., 15.)
+magnitude_range: tuple[float, float] = (12., 15.)
 
 ############################################################################
 #   Aperture options
@@ -233,12 +235,12 @@ if __name__ == '__main__':
     #   definitions above
     filter_list: list[str] = []
     image_paths: dict[str, str] = {}
-    sigma_object_psf: dict[str, float] = {}
+    fwhm_object_psf: dict[str, float] = {}
     for i in range(0, 10):
         if 'filter_' + str(i) in locals():
             filter_list.append(locals()['filter_' + str(i)])
             image_paths[locals()['filter_' + str(i)]] = locals()['path_' + str(i)]
-            sigma_object_psf[locals()['filter_' + str(i)]] = sigma
+            fwhm_object_psf[locals()['filter_' + str(i)]] = fwhm
 
     ###
     #   Initialize observation container
@@ -260,7 +262,7 @@ if __name__ == '__main__':
         filter_list,
         image_paths,
         output_dir,
-        sigma_object_psf,
+        fwhm_object_psf=fwhm_object_psf,
         photometry_extraction_method=photometry_extraction_method,
         radius_aperture=radius_aperture,
         inner_annulus_radius=inner_annulus_radius,

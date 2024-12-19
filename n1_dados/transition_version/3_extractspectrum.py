@@ -8,11 +8,6 @@
 #   Name of the object
 object_name: str = "star"
 
-#   Radial velocity [km/s]
-#       The specification of the radial velocity is necessary for the
-#       line identification to work correctly (see below).
-radial_velocity: float = 0.
-
 
 ###
 #   Extraction regions
@@ -32,13 +27,9 @@ background_sky_end: int = 730
 #   Set the variables to '?' for an automatic resizing
 lambda_min: str | float = '?'
 lambda_max: str | float = '?'
-# lambda_min: str | float = 4000.
-# lambda_max: str | float = 8000.
 
 flux_min: str | float = '?'
 flux_max: str | float = '?'
-# flux_min: str | float = -5
-# flux_max: str | float = 1e6
 
 ###
 #   Normalization ?
@@ -51,6 +42,11 @@ normalize: bool = False
 ###
 #   Line identifications
 #
+#   Radial velocity [km/s]
+#       The specification of the radial velocity is necessary for the
+#       line identification to work correctly (see below).
+radial_velocity: float = 0.
+
 #   Ions for which line markers are to be drawn.
 #   Example: ["HI", "FeI", ...]
 ions: list[str] = ["HI",]

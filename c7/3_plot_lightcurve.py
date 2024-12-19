@@ -18,7 +18,7 @@ dec_obj: str = "+??:??:??"
 transit_time: str = "?"
 
 #   Period (Algol: p=2.867315d, RZ Cas: p=1.1952499d, TV Cas: p=1.81259d)
-period: float = '?'
+period: float | str = '?'
 
 ############################################################################
 #                Additional options: only edit if necessary                #

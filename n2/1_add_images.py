@@ -75,6 +75,8 @@ n_cores_multiprocessing: int = 4
 #                               Libraries                                  #
 ############################################################################
 
+import time
+
 import tempfile
 
 import warnings
@@ -85,6 +87,7 @@ log.setLevel('ERROR')
 
 from ost_photometry.reduce import redu
 from ost_photometry.reduce import utilities
+from ost_photometry import style
 
 
 ############################################################################
@@ -92,6 +95,9 @@ from ost_photometry.reduce import utilities
 ############################################################################
 
 if __name__ == '__main__':
+    #   Set start time
+    start_time = time.time()
+
     ###
     #   Prepare directories and make checks
     #
@@ -121,6 +127,9 @@ if __name__ == '__main__':
         temperature_tolerance=temperature_tolerance,
         n_cores_multiprocessing=n_cores_multiprocessing,
     )
+
+    print(style.Bcolors.OKGREEN + "   Done" + style.Bcolors.ENDC)
+    print("--- %s minutes ---" % ((time.time() - start_time) / 60.))
 
 """
     Change Log

@@ -22,7 +22,7 @@ path_flat_darks: str = '?'
 #   Flats:
 path_flats: str = '?'
 
-#   Darks for wavelength calibration exposures:
+#   Darks for wavelength calibration exposures (optional):
 path_wavelength_darks: str = '?'
 
 #   Wavelength calibration exposures:
@@ -355,19 +355,22 @@ if __name__ == '__main__':
     ###
     #   Master dark for wavelength calibration
     #
-    master_image(
-        path_wavelength_darks,
-        out_path,
-        flip_bool=flip_images,
-        bin_bool=bin_images,
-        binning_factor=binning_value,
-        trim_bool=trim_image,
-        trim_x_s=trim_x_start,
-        trim_x_e=trim_x_end,
-        trim_y_s=trim_y_start,
-        trim_y_e=trim_y_end,
-        image_type='wave_dark',
-    )
+    subtract_dark_wavelength: bool = False
+    if path_wavelength_darks != '?':
+        master_image(
+            path_wavelength_darks,
+            out_path,
+            flip_bool=flip_images,
+            bin_bool=bin_images,
+            binning_factor=binning_value,
+            trim_bool=trim_image,
+            trim_x_s=trim_x_start,
+            trim_x_e=trim_x_end,
+            trim_y_s=trim_y_start,
+            trim_y_e=trim_y_end,
+            image_type='wave_dark',
+        )
+        subtract_dark_wavelength: bool = True
 
     ###
     #   Master wavelength calibration
@@ -384,7 +387,7 @@ if __name__ == '__main__':
         trim_y_s=trim_y_start,
         trim_y_e=trim_y_end,
         image_type='wave',
-        subtract_dark=True,
+        subtract_dark=subtract_dark_wavelength,
         master_dark='master_wave_dark.fit',
     )
 

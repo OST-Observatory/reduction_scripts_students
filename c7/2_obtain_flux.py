@@ -286,7 +286,6 @@ if __name__ == '__main__':
         photometry_extraction_method=photometry_extraction_method,
         separation_limit=separation_limit * u.arcsec,
         # correlation_method='own',
-        plot_sigma=True,
         # derive_transformation_coefficients=True,
         calculate_zero_point_statistic=False,
         # duplicate_handling_object_identification={'astropy': 'flux'},

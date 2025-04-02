@@ -23,6 +23,8 @@ path_flat_darks: str = '?'
 path_flats: str = '?'
 
 #   Darks for wavelength calibration exposures (optional):
+#   Can be set to '?' if no darks were taken for the wavelength
+#   calibration exposures.
 path_wavelength_darks: str = '?'
 
 #   Wavelength calibration exposures:

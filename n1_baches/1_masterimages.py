@@ -96,6 +96,7 @@ import astropy.units as u
 
 from ost_photometry import checks, terminal_output
 import ost_photometry.reduce.utilities as utilities
+import ost_photometry.reduce.registration as registration
 
 import warnings
 
@@ -207,7 +208,7 @@ def master_image(path, output_path, image_type, flip_bool=False,
     if bin_bool:
         images = utilities.bin_image(images, output_path / image_type, binning_factor)
     if trim_bool:
-        images = utilities.trim_image_simple(
+        images = registration.trim_image_simple(
             images,
             output_path / image_type,
             redundant_pixel_x_start=trim_x_s,

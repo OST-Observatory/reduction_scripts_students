@@ -119,29 +119,3 @@ if __name__ == '__main__':
 
     print(style.Bcolors.OKGREEN + "   Done" + style.Bcolors.ENDC)
     print("--- %s minutes ---" % ((time.time() - start_time) / 60.))
-
-"""
-    Change Log
-    ----------
-        0.1   (18.11.2020)
-           - initial release
-        0.2   (12.01.2021)
-           - almost complete rewrite
-           - switched to lacosmics from ccdproc for cosmics removal
-           - added flexibility
-           - added support for an arbitrary number of filters
-           - reduced number of code lines
-        0.21  (13.01.2021)
-           - fixed header handling
-           - further flexibility updates
-        0.22 (28.01.2021)
-           - minor style updates
-        0.23 (30.06.2021)
-           - minor style update
-        0.3  (10.02.2022)
-           - complete rewrite using ccdproc
-        0.4  (07.09.2022)
-           - set a couple of default parameters
-        0.5  (28.08.2023)
-           - some adjustments because of pipeline updates
-"""

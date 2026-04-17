@@ -313,30 +313,3 @@ if __name__ == '__main__':
             )
 
     print(f'{Bcolors.OKGREEN}   Done{Bcolors.ENDC}')
-
-"""
-    Change Log
-    ----------
-    * 20.11.2018
-        - Change for automate plot range to trigger when non-float-able value
-          given
-        - Check separately if X and Y limitations are given or not and only use
-          for automated where non is given
-        - Switched to TrueType fonts for the pdf
-        - Added optional labels for Isochrones
-    * 20.11.2020
-        - Added comments
-        - Added line style cycler
-        - Added option to calibrate the CMD
-    * 18.04.2021
-        - Almost complete rewrite
-        - Added support for simultaneous calculation of apparent and absolute
-          CMD
-        - Added support for isochrone files that contain several isochrones
-    * 31.08.2022
-        - Add error bars
-        - Add additional isochrones
-    * 13.03.2024
-        - Switch from function-based CMD plotting to class-based plotting
-        - Removed calibration parameter
-"""

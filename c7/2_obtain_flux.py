@@ -7,6 +7,10 @@ Multi-epoch / multi-filter photometry for variable stars (C7).
 Runs ``Observation.run_pipeline`` with ``extraction_mode="multi"`` (directories
 per filter), then calibration and ``LightCurveStep`` (CSV under
 ``<output_dir>/tables/light_curve_*.csv``, plots under ``<output_dir>/lightcurve/``).
+
+Calibration branch is selected with ``calibration_module`` in the configuration
+section: ``"legacy"`` (classic zero point + transform) or ``"differential"``
+(epoch-wise ``PhotometryCalibrator`` / T-ZP).
 """
 
 ############################################################################
@@ -90,6 +94,32 @@ output_dir: str = 'output/'
 #   Aperture or ePSF photometry
 photometry_extraction_method: str = 'APER'
 # photometry_extraction_method: str = 'PSF'
+
+###
+#   Calibration branch of the analysis pipeline
+#
+#   ``"legacy"`` — zero point (+ optional magnitude transform) via the classic
+#   calibration path (``derive_transformation_coefficients`` /
+#   ``calculate_zero_point_statistic`` apply).
+#
+#   ``"differential"`` — differential photometry (``PhotometryCalibrator``): for
+#   two filters, a default color index ``{second: (first, second)}`` is set from
+#   ``filter_1`` / ``filter_2`` order below; extend ``PipelineConfig`` in code if
+#   you need a different color definition.
+#
+calibration_module: str = 'legacy'
+
+###
+#   Differential calibration only (ignored when ``calibration_module == "legacy"``)
+#
+#   ``differential_coefficient_mode`` — how T / zero point are grouped:
+#   ``per_image``, ``per_night``, ``fixed``, ``ensemble`` (see ``PipelineConfig``).
+#
+#   ``differential_extinction_order`` — extinction correction in the differential
+#   path: ``none``, ``first``, ``second``.
+#
+differential_coefficient_mode: str = 'per_night'
+differential_extinction_order: str = 'first'
 
 ############################################################################
 #   Calibration source (possibilities: simbad_vot, UCAC4, GSC2.3, URAT1,
@@ -270,6 +300,44 @@ if __name__ == '__main__':
         periods=[period],
     )
 
+    _cal_mod = calibration_module.strip().lower()
+    if _cal_mod not in ('legacy', 'differential'):
+        raise ValueError(
+            "calibration_module must be 'legacy' or 'differential', "
+            f'got {calibration_module!r}'
+        )
+
+    # Legacy: fit/use classic transformation & ZP stats. Differential: handled
+    # inside PhotometryCalibrator; these legacy flags are turned off.
+    _legacy_cal = _cal_mod == 'legacy'
+    _color_idx = None
+    if _cal_mod == 'differential' and len(filter_list) >= 2:
+        f_a, f_b = filter_list[0], filter_list[1]
+        _color_idx = {f_b: (f_a, f_b)}
+
+    _diff_pipeline_opts: dict[str, str] = {}
+    if _cal_mod == 'differential':
+        _coeff_modes = frozenset(
+            {'per_image', 'per_night', 'fixed', 'ensemble'},
+        )
+        _ext_orders = frozenset({'none', 'first', 'second'})
+        _dcm = differential_coefficient_mode.strip().lower()
+        _deo = differential_extinction_order.strip().lower()
+        if _dcm not in _coeff_modes:
+            raise ValueError(
+                'differential_coefficient_mode must be one of '
+                f'{sorted(_coeff_modes)}, got {differential_coefficient_mode!r}'
+            )
+        if _deo not in _ext_orders:
+            raise ValueError(
+                'differential_extinction_order must be one of '
+                f'{sorted(_ext_orders)}, got {differential_extinction_order!r}'
+            )
+        _diff_pipeline_opts = {
+            'differential_coefficient_mode': _dcm,
+            'differential_extinction_order': _deo,
+        }
+
     config = PipelineConfig(
         fwhm_object_psf=fwhm_for_pipeline,
         photometry_extraction_method=photometry_extraction_method,
@@ -284,11 +352,14 @@ if __name__ == '__main__':
         cross_identification_limit=1,
         n_allowed_non_detections_object=n_allowed_non_detections_object,
         separation_limit=separation_limit * u.arcsec,
+        calibration_module=_cal_mod,
         calibration_source=calibration_source,
         calibration_catalog_mag_range=magnitude_range,
         apply_transformation=True,
-        derive_transformation_coefficients=False,
-        calculate_zero_point_statistic=False,
+        derive_transformation_coefficients=_legacy_cal,
+        calculate_zero_point_statistic=_legacy_cal,
+        differential_color_indices=_color_idx,
+        **_diff_pipeline_opts,
         aperture_radius=radius_aperture,
         extract_only_circular_region=False,
         identify_cluster_gaia_data=False,

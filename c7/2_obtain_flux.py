@@ -1,6 +1,14 @@
 #! /usr/bin/python
 # -*- coding: utf-8 -*-
 
+"""
+Multi-epoch / multi-filter photometry for variable stars (C7).
+
+Runs ``Observation.run_pipeline`` with ``extraction_mode="multi"`` (directories
+per filter), then calibration and ``LightCurveStep`` (CSV under
+``<output_dir>/tables/light_curve_*.csv``, plots under ``<output_dir>/lightcurve/``).
+"""
+
 ############################################################################
 #             Configuration: modify the file in this section               #
 ############################################################################
@@ -95,7 +103,7 @@ photometry_extraction_method: str = 'APER'
     stars the Bmag and Vmag columns contain the Hipparcos/Tycho Bt and Vt
     mags respectively.
 '''
-# calibration_method: str = 'UCAC4'
+# calibration_source: str = 'UCAC4'
 
 
 '''
@@ -103,14 +111,14 @@ The Full GSC2.3.2 Catalogue:
     Often not Johnson B & V magnitudes, but similar passbands. Only those
     with codes 3 and 4 are Johnson magnitudes.
 '''
-# calibration_method: str = 'GSC2.3'
+# calibration_source: str = 'GSC2.3'
 
 
 '''
     URAT1 Catalog (Zacharias+ 2015)
     B and V are also from the APASS survey.
 '''
-# calibration_method: str = 'URAT1
+# calibration_source: str = 'URAT1
 
 
 '''
@@ -118,34 +126,34 @@ The Full GSC2.3.2 Catalogue:
     V: Photometric magnitude in Optical V band between 500 and 600 nm
     B: Photometric magnitude in Optical B band between 400 and 500 nm
 '''
-# calibration_method: str = 'NOMAD'
+# calibration_source: str = 'NOMAD'
 
 
 '''
     Homogeneous Means in the UBV System (Mermilliod 1991):
     Johnson V-band & Johnson B-band magnitude (only B-V given)
 '''
-# calibration_method: str = 'HMUBV'
+# calibration_source: str = 'HMUBV'
 
 
 '''
     Guide Star Photometric Catalog V2.4 (Bucciarelli+ 2001):
     Johnson B,V,R-band magnitude
 '''
-# calibration_method: str = 'GSPC2.4'
+# calibration_source: str = 'GSPC2.4'
 
 
 '''
     AAVSO Photo. All Sky Surv. DR9(Henden+,2016):
     Johnson V-band & Johnson B-band magnitude
 '''
-calibration_method: str = 'APASS'
+calibration_source: str = 'APASS'
 
 '''
     Swift/UVOT Serendipitous Source Catalog (Yershov, 2015):
     AB magnitudes: U-AB, B-AB, V-AB
 '''
-# calibration_method: str = 'Swift/UVOT'
+# calibration_source: str = 'Swift/UVOT'
 
 
 '''
@@ -153,21 +161,21 @@ calibration_method: str = 'APASS'
     (Page+, 2021):
     AB magnitudes: UmAB, BmAB, VmAB
 '''
-# calibration_method: str = 'XMM-OM'
+# calibration_source: str = 'XMM-OM'
 
 
 '''
     Optical-UV-IR survey of North Celestial Cap (Gorbikov+, 2014):
     Johnson VRI magnitudes
 '''
-# calibration_method: str = 'VRI-NCC'
+# calibration_source: str = 'VRI-NCC'
 
 
 '''
     The USNO-B1.0 Catalog (Monet+ 2003):
     BRI magnitudes
 '''
-# calibration_method: str = 'USNO-B1.0'
+# calibration_source: str = 'USNO-B1.0'
 
 
 #   Magnitude limit of the calibration stars
@@ -191,7 +199,7 @@ radii_unit: str = 'arcsec'
 #   Correlation options
 #
 #   ID of the reference image
-reference_image_id: int = 0
+reference_image_index: int = 0
 
 #   Maximal separation between two objects in arcsec
 separation_limit: float = 5.
@@ -220,6 +228,7 @@ warnings.filterwarnings('ignore')
 
 from ost_photometry import style
 from ost_photometry.analyze import analyze
+from ost_photometry.analyze.pipeline import PipelineConfig
 
 import astropy.units as u
 
@@ -242,8 +251,14 @@ if __name__ == '__main__':
             image_paths[locals()['filter_' + str(i)]] = locals()['path_' + str(i)]
             fwhm_object_psf[locals()['filter_' + str(i)]] = fwhm
 
+    fwhm_for_pipeline: dict[str, float] | None = None
+    if any(v is not None for v in fwhm_object_psf.values()):
+        fwhm_for_pipeline = {
+            k: float(v) for k, v in fwhm_object_psf.items() if v is not None
+        }
+
     ###
-    #   Initialize observation container
+    #   Initialize observation and run full pipeline (incl. light curves)
     #
     observation = analyze.Observation(
         ra_objects=[ra_star],
@@ -255,40 +270,44 @@ if __name__ == '__main__':
         periods=[period],
     )
 
-    ###
-    #   Extract flux
-    #
-    observation.extract_flux_multi(
-        filter_list,
-        image_paths,
-        output_dir,
-        fwhm_object_psf=fwhm_object_psf,
+    config = PipelineConfig(
+        fwhm_object_psf=fwhm_for_pipeline,
         photometry_extraction_method=photometry_extraction_method,
         radius_aperture=radius_aperture,
         inner_annulus_radius=inner_annulus_radius,
         outer_annulus_radius=outer_annulus_radius,
         radii_unit=radii_unit,
-        reference_image_id=reference_image_id,
+        reference_image_index=reference_image_index,
+        wcs_method="astrometry",
+        max_pixel_between_objects=3,
+        ooi_correlation_strategy=1,
+        cross_identification_limit=1,
         n_allowed_non_detections_object=n_allowed_non_detections_object,
         separation_limit=separation_limit * u.arcsec,
-        # duplicate_handling_object_identification={'astropy': 'flux'},
-        # correlation_method='own',
+        calibration_source=calibration_source,
+        calibration_catalog_mag_range=magnitude_range,
+        apply_transformation=True,
+        derive_transformation_coefficients=False,
+        calculate_zero_point_statistic=False,
+        aperture_radius=radius_aperture,
+        extract_only_circular_region=False,
+        identify_cluster_gaia_data=False,
+        clean_objs_using_pm=False,
+        convert_magnitudes=False,
+        skip_light_curve=False,
+        light_curve_binning_factor=binning_factor,
+        plot_light_curve_objects_of_interest=True,
+        plot_light_curve_calibration_objects=True,
+        plot_light_curve_all_objects=False,
+        skip_extinction_fit=True,
     )
 
-    ###
-    #   Calibrate data and plot light curves
-    observation.calibrate_data_mk_light_curve(
+    observation.run_pipeline(
         filter_list,
-        output_dir,
-        binning_factor=binning_factor,
-        calibration_method=calibration_method,
-        n_allowed_non_detections_object=n_allowed_non_detections_object,
-        photometry_extraction_method=photometry_extraction_method,
-        separation_limit=separation_limit * u.arcsec,
-        # correlation_method='own',
-        # derive_transformation_coefficients=True,
-        calculate_zero_point_statistic=False,
-        # duplicate_handling_object_identification={'astropy': 'flux'},
+        image_paths=image_paths,
+        output_dir=output_dir,
+        config=config,
+        extraction_mode="multi",
     )
 
     print(style.Bcolors.OKGREEN + "   Done" + style.Bcolors.ENDC)

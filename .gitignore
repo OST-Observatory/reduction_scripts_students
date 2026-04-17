@@ -2,3 +2,5 @@
 .idea
 __pycache__
 .kate-swp
+atomic_lines.tsv
+ArI_ArII_NeI_HI.tsv

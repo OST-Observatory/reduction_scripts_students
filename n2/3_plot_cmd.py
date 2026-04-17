@@ -18,6 +18,8 @@ name_of_star_cluster: str = "?"
 ###
 #   Parameters regarding the file, containing the CMD data
 #
+#   Pipeline post-processed table (epoch-native ECSV) or legacy ASCII
+
 #   Name of CMD data file
 cmd_file_name: str = "?/cmd.dat"
 
@@ -122,6 +124,26 @@ from ost_photometry import utilities as base_utilities
 #                           Routines & definitions                         #
 ############################################################################
 
+_EPOCH_NATIVE_SCHEMA = "ost_photometry.epoch_native.v1"
+
+
+def _epoch_native_cmd_slice(tbl: Table) -> Table:
+    if "epoch_id" not in tbl.colnames:
+        return tbl
+    u = np.unique(np.asarray(tbl["epoch_id"]))
+    if len(u) <= 1:
+        return tbl
+    return tbl[np.asarray(tbl["epoch_id"]) == u[0]]
+
+
+def _table_is_epoch_native_photometry(tbl: Table) -> bool:
+    if tbl.meta.get("photometry_schema") == _EPOCH_NATIVE_SCHEMA:
+        return True
+    return "epoch_id" in tbl.colnames and any(
+        n.startswith("mag_cal_") for n in tbl.colnames
+    )
+
+
 matplotlib.rcParams['pdf.fonttype']: int = 42
 
 ############################################################################
@@ -140,8 +162,10 @@ if __name__ == '__main__':
     #
     print(f'{Bcolors.BOLD}   Read file: {cmd_file_name}{Bcolors.ENDC}')
 
-    #   Read table
-    tbl_cmd = Table.read(cmd_file_name, format='ascii')
+    _fmt = "ascii.ecsv" if cmd_file_name.lower().endswith(".ecsv") else "ascii"
+    tbl_cmd = Table.read(cmd_file_name, format=_fmt)
+    tbl_cmd = _epoch_native_cmd_slice(tbl_cmd)
+    epoch_native = _table_is_epoch_native_photometry(tbl_cmd)
     if len(tbl_cmd) == 0:
         print(
             f'{Bcolors.FAIL}   The CMD table is empty => EXIT{Bcolors.ENDC}'
@@ -160,22 +184,42 @@ if __name__ == '__main__':
             file_type,
         )
 
-        #   Extract data
-        magnitude_filter_1 = tbl_cmd[f'{filter_1} [mag]'].value
-        magnitude_filter_2 = tbl_cmd[f'{filter_2} [mag]'].value
+        #   Extract data (epoch-native ECSV vs student legacy cmd.dat)
+        if epoch_native:
+            c1, c2 = f"mag_cal_{filter_1}", f"mag_cal_{filter_2}"
+            if c1 not in tbl_cmd.colnames or c2 not in tbl_cmd.colnames:
+                raise KeyError(
+                    f"Epoch-native table missing {c1!r} or {c2!r}; "
+                    f"available: {tbl_cmd.colnames!r}"
+                )
+            magnitude_filter_1 = np.asarray(tbl_cmd[c1], dtype=float)
+            magnitude_filter_2 = np.asarray(tbl_cmd[c2], dtype=float)
+        else:
+            magnitude_filter_1 = tbl_cmd[f"{filter_1} [mag]"].value
+            magnitude_filter_2 = tbl_cmd[f"{filter_2} [mag]"].value
 
         #   Calculate color
         color = magnitude_filter_1 - magnitude_filter_2
 
         #   Get errors
         if do_error_bars:
-            magnitude_filter_1_err = tbl_cmd[f'{filter_1}_err'].value
-            magnitude_filter_2_err = tbl_cmd[f'{filter_2}_err'].value
+            if epoch_native:
+                e1, e2 = f"err_cal_{filter_1}", f"err_cal_{filter_2}"
+                if e1 not in tbl_cmd.colnames or e2 not in tbl_cmd.colnames:
+                    raise KeyError(
+                        f"Epoch-native table missing {e1!r} or {e2!r} for error bars."
+                    )
+                magnitude_filter_1_err = np.asarray(tbl_cmd[e1], dtype=float)
+                magnitude_filter_2_err = np.asarray(tbl_cmd[e2], dtype=float)
+            else:
+                magnitude_filter_1_err = tbl_cmd[f"{filter_1}_err"].value
+                magnitude_filter_2_err = tbl_cmd[f"{filter_2}_err"].value
             color_err = utilities.err_prop(
                 magnitude_filter_1_err,
-                magnitude_filter_2_err
+                magnitude_filter_2_err,
             )
         else:
+            magnitude_filter_1_err = None
             magnitude_filter_2_err = None
             color_err = None
 

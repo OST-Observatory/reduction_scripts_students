@@ -37,13 +37,19 @@ color: str = '?-?'
 #   but it can be changed as needed).
 output_dir: str = 'output'
 
-#   Optional input path. If None, uses the default file name below.
+#   Optional input path. If None, auto-detect under ``output_dir/tables/``.
 #   Can be a single CSV file path or a directory containing multiple CSV files.
 input_path: str | None = None
 
-#   Light curve file name (default single-file input)
-color_suffix: str = f'_{color}' if color not in (None, '') else ''
-file_name: str = f'{output_dir}/tables/light_curve_{name_star.replace(" ", "_")}_{filter_}{color_suffix}.csv'
+#   Default CSV from ``2_obtain_flux.py`` / pipeline: ``light_curve_<name>_<filter>.csv``
+#   (``<name>`` as in ``Observation``, often with spaces). Legacy runs used a color
+#   suffix, e.g. ``..._V_B-V.csv`` — ``resolve_input_files`` tries several patterns.
+_color_suffix = "" if color in (None, "", "?-?") else f"_{color}"
+file_name: str = (
+    f'{output_dir}/tables/light_curve_{name_star.replace(" ", "_")}_{filter_}.csv'
+    if filter_ not in (None, "?")
+    else f'{output_dir}/tables/light_curve_{name_star.replace(" ", "_")}.csv'
+)
 
 #   Binning in days
 binning_factor: float = 0.0001
@@ -85,11 +91,52 @@ def infer_filter_from_timeseries(ts_in: TimeSeries) -> str | None:
 
 
 def resolve_input_files() -> list[str]:
-    if input_path is None:
+    if input_path is not None:
+        if os.path.isdir(input_path):
+            return sorted(glob(os.path.join(input_path, "*.csv")))
+        return [input_path]
+
+    tables_dir = os.path.join(output_dir, "tables")
+    if os.path.isfile(file_name):
         return [file_name]
-    if os.path.isdir(input_path):
-        return sorted(glob(os.path.join(input_path, '*.csv')))
-    return [input_path]
+
+    name_raw = name_star.strip()
+    name_san = name_raw.replace(" ", "_")
+    names_try = list(dict.fromkeys([name_raw, name_san]))
+
+    def _candidates() -> list[str]:
+        out: list[str] = []
+        if filter_ not in (None, "?"):
+            for nm in names_try:
+                out.append(os.path.join(tables_dir, f"light_curve_{nm}_{filter_}.csv"))
+            if _color_suffix:
+                for nm in names_try:
+                    out.append(
+                        os.path.join(
+                            tables_dir,
+                            f"light_curve_{nm}_{filter_}{_color_suffix}.csv",
+                        )
+                    )
+        for nm in names_try:
+            out.append(os.path.join(tables_dir, f"light_curve_{nm}.csv"))
+        return out
+
+    for p in _candidates():
+        if os.path.isfile(p):
+            return [p]
+
+    if filter_ not in (None, "?"):
+        pat = os.path.join(tables_dir, f"light_curve_*_{filter_}.csv")
+        found = sorted(glob(pat))
+        if found:
+            return found
+
+    pat_all = os.path.join(tables_dir, "light_curve_*.csv")
+    found_all = sorted(glob(pat_all))
+    if found_all:
+        return found_all
+
+    return []
 
 
 def plot_single_file(csv_path: str) -> None:
@@ -101,10 +148,19 @@ def plot_single_file(csv_path: str) -> None:
     )
     ts.sort('time')
 
+    flt = filter_
+    if flt in (None, "?"):
+        flt = infer_filter_from_filename(csv_path) or infer_filter_from_timeseries(ts)
+    if flt is None or f"{flt}_err" not in ts.colnames:
+        raise ValueError(
+            f"Could not determine magnitude column for {csv_path!r}; "
+            f"set ``filter_`` to a band (e.g. 'V'). Columns: {ts.colnames!r}"
+        )
+
     plots.light_curve_jd(
         ts,
-        filter_,
-        f"{filter_}_err",
+        flt,
+        f"{flt}_err",
         output_dir,
         name_object=name_star,
     )
@@ -113,8 +169,8 @@ def plot_single_file(csv_path: str) -> None:
             and period is not None and period != '?' and period > 0.0):
         plots.light_curve_fold(
             ts,
-            filter_,
-            f"{filter_}_err",
+            flt,
+            f"{flt}_err",
             output_dir,
             transit_time,
             period,
@@ -172,7 +228,11 @@ def plot_directory(files: list[str]) -> None:
 def main() -> None:
     input_files = resolve_input_files()
     if not input_files:
-        raise FileNotFoundError('No CSV files found to load the light curve.')
+        raise FileNotFoundError(
+            "No light-curve CSV found under "
+            f"{os.path.join(output_dir, 'tables')!r}. "
+            "Set ``input_path`` or run ``2_obtain_flux.py`` first."
+        )
 
     if len(input_files) > 1 or (input_path is not None and os.path.isdir(input_path)):
         plot_directory(input_files)

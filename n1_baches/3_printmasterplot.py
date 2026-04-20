@@ -62,7 +62,7 @@ n_panels_per_page: int = 5
 
 #   Number of panels into which the spectrum should be split
 #   (panel_version=default)
-n_panels: int = 21
+n_panels: int = 20
 
 ###
 #   Normalization ?
@@ -1253,7 +1253,10 @@ def read_baches_merged(file_name):
     wave_length_merged = wave_length_merged[start_cut:-end_cut]
     flux_merged = file_data_merged[start_cut:-end_cut]
 
-    return wave_length_merged * u.AA, flux_merged * u.adu
+
+    wave = np.array(wave_length_merged, dtype=float) * u.AA
+    flux = np.array(flux_merged, dtype=float) * u.adu
+    return wave, flux
 
 
 def check_file_name(file_name):
@@ -2198,7 +2201,7 @@ def plot_panels_fabian(wave_length, flux, object_name, normalize,
         add_idents_fabian(lines_to_mark, x_limit, axes[axis_index])
 
         #   Save plot
-        if i % n_panels_per_page == 0:
+        if i % n_panels_per_page == 0 or i == n_panels:
             plt.tight_layout()
             plt.savefig(f"{temp_dir.name}/{int(i / n_panels_per_page)}.pdf")
             plt.close()
@@ -2233,7 +2236,7 @@ def plot_panels_fabian(wave_length, flux, object_name, normalize,
     )
     merger = PdfMerger()
     file_path = f"output/spectrum_panels_{merge_type}-merged_{object_name}.pdf"
-    for flux_element in os.listdir(temp_dir.name):
+    for flux_element in sorted(os.listdir(temp_dir.name)):
         merger.append(f"{temp_dir.name}/{flux_element}")
     with open(file_path, "wb") as new_file:
         merger.write(new_file)

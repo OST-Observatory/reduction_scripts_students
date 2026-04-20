@@ -371,6 +371,7 @@ if __name__ == '__main__':
         plot_light_curve_calibration_objects=True,
         plot_light_curve_all_objects=False,
         skip_extinction_fit=True,
+        skip_derive_limiting_magnitude=True,
     )
 
     observation.run_pipeline(

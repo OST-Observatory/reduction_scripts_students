@@ -8,9 +8,8 @@ Runs ``Observation.run_pipeline`` with ``extraction_mode="multi"`` (directories
 per filter), then calibration and ``LightCurveStep`` (CSV under
 ``<output_dir>/tables/light_curve_*.csv``, plots under ``<output_dir>/lightcurve/``).
 
-Calibration branch is selected with ``calibration_module`` in the configuration
-section: ``"legacy"`` (classic zero point + transform) or ``"differential"``
-(epoch-wise ``PhotometryCalibrator`` / T-ZP).
+Calibration via ``PipelineConfig.from_preset`` (``c7_variable``, ``c7_variable_extinction``)
+or fine-grained ``calibration_strategy`` / ``calibration_grouping`` / ``extinction_mode`` fields.
 """
 
 ############################################################################
@@ -96,30 +95,32 @@ photometry_extraction_method: str = 'APER'
 # photometry_extraction_method: str = 'PSF'
 
 ###
-#   Calibration branch of the analysis pipeline
+#   Calibration configuration mode: "preset" or "custom"
 #
-#   ``"legacy"`` — zero point (+ optional magnitude transform) via the classic
-#   calibration path (``derive_transformation_coefficients`` /
-#   ``calculate_zero_point_statistic`` apply).
-#
-#   ``"differential"`` — differential photometry (``PhotometryCalibrator``): for
-#   two filters, a default color index ``{second: (first, second)}`` is set from
-#   ``filter_1`` / ``filter_2`` order below; extend ``PipelineConfig`` in code if
-#   you need a different color definition.
-#
-calibration_module: str = 'legacy'
+calibration_config_mode: str = "preset"
 
 ###
-#   Differential calibration only (ignored when ``calibration_module == "legacy"``)
+#   Preset (used when calibration_config_mode == "preset")
 #
-#   ``differential_coefficient_mode`` — how T / zero point are grouped:
-#   ``per_image``, ``per_night``, ``fixed``, ``ensemble`` (see ``PipelineConfig``).
+#   ``c7_variable`` — linear T/ZP per night, no extinction (good starting point).
+#   ``c7_variable_extinction`` — same with fitted extinction when airmass varies.
 #
-#   ``differential_extinction_order`` — extinction correction in the differential
-#   path: ``none``, ``first``, ``second``.
+calibration_preset: str = "c7_variable"
+
+###
+#   Fine-grained calibration (used when calibration_config_mode == "custom")
 #
-differential_coefficient_mode: str = 'per_night'
-differential_extinction_order: str = 'first'
+calibration_strategy: str = "linear_fit"      # median_zp | linear_fit
+calibration_grouping: str = "per_night"       # per_image | per_night | ensemble | fixed
+extinction_mode: str = "none"                 # none | tabulated | from_comparison_stars | from_value_airmass
+color_term_fit: str = "auto"                  # always | auto | never
+fit_sigma_clip: float = 2.5
+derive_transform_from_data: bool = True
+zp_subsample_statistic: bool = False
+write_legacy_wide_magnitudes_dat: bool = False
+exposure_pairing: str = "jd_nearest"          # jd_nearest | index
+exposure_jd_tolerance: float = 0.001
+reference_filter: str | None = None
 
 ############################################################################
 #   Calibration source (possibilities: simbad_vot, UCAC4, GSC2.3, URAT1,
@@ -300,45 +301,19 @@ if __name__ == '__main__':
         periods=[period],
     )
 
-    _cal_mod = calibration_module.strip().lower()
-    if _cal_mod not in ('legacy', 'differential'):
-        raise ValueError(
-            "calibration_module must be 'legacy' or 'differential', "
-            f'got {calibration_module!r}'
-        )
-
-    # Legacy: fit/use classic transformation & ZP stats. Differential: handled
-    # inside PhotometryCalibrator; these legacy flags are turned off.
-    _legacy_cal = _cal_mod == 'legacy'
     _color_idx = None
-    if _cal_mod == 'differential' and len(filter_list) >= 2:
+    if len(filter_list) >= 2:
         f_a, f_b = filter_list[0], filter_list[1]
         _color_idx = {f_b: (f_a, f_b)}
 
-    _diff_pipeline_opts: dict[str, str] = {}
-    if _cal_mod == 'differential':
-        _coeff_modes = frozenset(
-            {'per_image', 'per_night', 'fixed', 'ensemble'},
+    _mode = calibration_config_mode.strip().lower()
+    if _mode not in ("preset", "custom"):
+        raise ValueError(
+            "calibration_config_mode must be 'preset' or 'custom', "
+            f"got {calibration_config_mode!r}"
         )
-        _ext_orders = frozenset({'none', 'first', 'second'})
-        _dcm = differential_coefficient_mode.strip().lower()
-        _deo = differential_extinction_order.strip().lower()
-        if _dcm not in _coeff_modes:
-            raise ValueError(
-                'differential_coefficient_mode must be one of '
-                f'{sorted(_coeff_modes)}, got {differential_coefficient_mode!r}'
-            )
-        if _deo not in _ext_orders:
-            raise ValueError(
-                'differential_extinction_order must be one of '
-                f'{sorted(_ext_orders)}, got {differential_extinction_order!r}'
-            )
-        _diff_pipeline_opts = {
-            'differential_coefficient_mode': _dcm,
-            'differential_extinction_order': _deo,
-        }
 
-    config = PipelineConfig(
+    _shared_pipeline_kw = dict(
         fwhm_object_psf=fwhm_for_pipeline,
         photometry_extraction_method=photometry_extraction_method,
         radius_aperture=radius_aperture,
@@ -352,14 +327,9 @@ if __name__ == '__main__':
         cross_identification_limit=1,
         n_allowed_non_detections_object=n_allowed_non_detections_object,
         separation_limit=separation_limit * u.arcsec,
-        calibration_module=_cal_mod,
         calibration_source=calibration_source,
         calibration_catalog_mag_range=magnitude_range,
-        apply_transformation=True,
-        derive_transformation_coefficients=_legacy_cal,
-        calculate_zero_point_statistic=_legacy_cal,
-        differential_color_indices=_color_idx,
-        **_diff_pipeline_opts,
+        color_indices=_color_idx,
         aperture_radius=radius_aperture,
         extract_only_circular_region=False,
         identify_cluster_gaia_data=False,
@@ -370,9 +340,56 @@ if __name__ == '__main__':
         plot_light_curve_objects_of_interest=True,
         plot_light_curve_calibration_objects=True,
         plot_light_curve_all_objects=False,
-        skip_extinction_fit=True,
         skip_derive_limiting_magnitude=True,
     )
+
+    if _mode == "preset":
+        config = PipelineConfig.from_preset(
+            calibration_preset.strip(),
+            overrides=_shared_pipeline_kw,
+        )
+    else:
+        _strategies = frozenset({"median_zp", "linear_fit"})
+        _groupings = frozenset({"per_image", "per_night", "ensemble", "fixed"})
+        _extinction = frozenset({
+            "none",
+            "tabulated",
+            "from_comparison_stars",
+            "from_value_airmass",
+        })
+        _color_term_fits = frozenset({"always", "auto", "never"})
+        _pairing = frozenset({"jd_nearest", "index"})
+        _cs = calibration_strategy.strip().lower()
+        _cg = calibration_grouping.strip().lower()
+        _em = extinction_mode.strip().lower()
+        _ctf = color_term_fit.strip().lower()
+        _ep = exposure_pairing.strip().lower()
+        if _cs not in _strategies:
+            raise ValueError(f"calibration_strategy must be one of {sorted(_strategies)}")
+        if _cg not in _groupings:
+            raise ValueError(f"calibration_grouping must be one of {sorted(_groupings)}")
+        if _em not in _extinction:
+            raise ValueError(f"extinction_mode must be one of {sorted(_extinction)}")
+        if _ctf not in _color_term_fits:
+            raise ValueError(
+                f"color_term_fit must be one of {sorted(_color_term_fits)}"
+            )
+        if _ep not in _pairing:
+            raise ValueError(f"exposure_pairing must be one of {sorted(_pairing)}")
+        config = PipelineConfig(
+            calibration_strategy=_cs,
+            calibration_grouping=_cg,
+            extinction_mode=_em,
+            color_term_fit=_ctf,
+            fit_sigma_clip=fit_sigma_clip,
+            derive_transform_from_data=derive_transform_from_data,
+            zp_subsample_statistic=zp_subsample_statistic,
+            write_legacy_wide_magnitudes_dat=write_legacy_wide_magnitudes_dat,
+            exposure_pairing=_ep,
+            exposure_jd_tolerance=exposure_jd_tolerance,
+            reference_filter=reference_filter,
+            **_shared_pipeline_kw,
+        )
 
     observation.run_pipeline(
         filter_list,

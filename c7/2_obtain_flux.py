@@ -8,7 +8,7 @@ Runs ``Observation.run_pipeline`` with ``extraction_mode="multi"`` (directories
 per filter), then calibration and ``LightCurveStep`` (CSV under
 ``<output_dir>/tables/light_curve_*.csv``, plots under ``<output_dir>/lightcurve/``).
 
-Calibration via ``PipelineConfig.from_preset`` (``c7_variable``, ``c7_variable_extinction``)
+Calibration via ``PipelineConfig.from_preset`` (``linear_fit_per_night``, ``linear_fit_per_night_extinction``)
 or fine-grained ``calibration_strategy`` / ``calibration_grouping`` / ``extinction_mode`` fields.
 """
 
@@ -102,10 +102,10 @@ calibration_config_mode: str = "preset"
 ###
 #   Preset (used when calibration_config_mode == "preset")
 #
-#   ``c7_variable`` — linear T/ZP per night, no extinction (good starting point).
-#   ``c7_variable_extinction`` — same with fitted extinction when airmass varies.
+#   ``linear_fit_per_night`` — linear T/ZP per night, no extinction (good starting point).
+#   ``linear_fit_per_night_extinction`` — same with fitted extinction when airmass varies.
 #
-calibration_preset: str = "c7_variable"
+calibration_preset: str = "linear_fit_per_night"
 
 ###
 #   Fine-grained calibration (used when calibration_config_mode == "custom")
@@ -117,7 +117,6 @@ color_term_fit: str = "auto"                  # always | auto | never
 fit_sigma_clip: float = 2.5
 derive_transform_from_data: bool = True
 zp_subsample_statistic: bool = False
-write_legacy_wide_magnitudes_dat: bool = False
 exposure_pairing: str = "jd_nearest"          # jd_nearest | index
 exposure_jd_tolerance: float = 0.001
 reference_filter: str | None = None
@@ -384,7 +383,6 @@ if __name__ == '__main__':
             fit_sigma_clip=fit_sigma_clip,
             derive_transform_from_data=derive_transform_from_data,
             zp_subsample_statistic=zp_subsample_statistic,
-            write_legacy_wide_magnitudes_dat=write_legacy_wide_magnitudes_dat,
             exposure_pairing=_ep,
             exposure_jd_tolerance=exposure_jd_tolerance,
             reference_filter=reference_filter,

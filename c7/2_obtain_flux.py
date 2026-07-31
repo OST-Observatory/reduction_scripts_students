@@ -51,7 +51,13 @@ period: float | str = '?'
 #   Finder options
 #
 #   Set FWHM -> characterizes the size of the diffraction patterns
+#   ``None`` = estimate FWHM per image; set a float to force that value (px).
 fwhm: float | None = None
+
+#   Accepted range for automatic FWHM estimation (pixels). Raise the max if
+#   seeing is poor and auto-FWHM falls back to the default too often.
+fwhm_estimate_min: float = 2.0
+fwhm_estimate_max: float = 15.0
 
 ############################################################################
 #   Define filter 1 (e.g., U, B,V,...)
@@ -314,6 +320,8 @@ if __name__ == '__main__':
 
     _shared_pipeline_kw = dict(
         fwhm_object_psf=fwhm_for_pipeline,
+        fwhm_estimate_min=fwhm_estimate_min,
+        fwhm_estimate_max=fwhm_estimate_max,
         photometry_extraction_method=photometry_extraction_method,
         radius_aperture=radius_aperture,
         inner_annulus_radius=inner_annulus_radius,
@@ -333,13 +341,20 @@ if __name__ == '__main__':
         extract_only_circular_region=False,
         identify_cluster_gaia_data=False,
         clean_objs_using_pm=False,
+        # Magnitude output: keep calibrated catalog system (APASS → Johnson/Vega).
+        # To convert: convert_magnitudes=True plus e.g. output_filter_set="sdss"
+        # and output_magnitude_system="ab" (SDSS+Vega is rejected).
         convert_magnitudes=False,
+        output_filter_set="auto",
+        output_magnitude_system="auto",
         skip_light_curve=False,
         light_curve_binning_factor=binning_factor,
         plot_light_curve_objects_of_interest=True,
         plot_light_curve_calibration_objects=True,
         plot_light_curve_all_objects=False,
         skip_derive_limiting_magnitude=True,
+        # Cap individual inter-filter pair PDFs (None=all, 0=overview only):
+        # diagnostic_plots__correlation_inter_filter_max_pair_plots=25,
     )
 
     if _mode == "preset":

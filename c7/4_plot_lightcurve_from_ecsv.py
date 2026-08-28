@@ -135,7 +135,7 @@ def _build_arg_parser() -> argparse.ArgumentParser:
     p.add_argument(
         "--output-dir",
         default=None,
-        help="Output root (plots under lightcurve/, CSV under tables/)",
+        help="Output root (plots under results/lightcurves/, CSV under tables/)",
     )
     p.add_argument("--filter", default=None, help="Filter name, e.g. V")
     p.add_argument("--object-id", type=int, default=None)

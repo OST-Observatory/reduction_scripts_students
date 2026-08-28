@@ -6,7 +6,7 @@ Multi-epoch / multi-filter photometry for variable stars (C7).
 
 Runs ``Observation.run_pipeline`` with ``extraction_mode="multi"`` (directories
 per filter), then calibration and ``LightCurveStep`` (CSV under
-``<output_dir>/tables/light_curve_*.csv``, plots under ``<output_dir>/lightcurve/``).
+``<output_dir>/tables/light_curve_*.csv``, plots under ``<output_dir>/results/lightcurves/``).
 
 Calibration via ``PipelineConfig.from_preset`` (``linear_fit_per_night``, ``linear_fit_per_night_extinction``)
 or fine-grained ``calibration_strategy`` / ``calibration_grouping`` / ``extinction_mode`` fields.

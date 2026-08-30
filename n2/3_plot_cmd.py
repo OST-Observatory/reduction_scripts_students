@@ -110,39 +110,10 @@ isochrone_configuration_file: str = 'parsec_3p6_noTP-AGB_isochrones.yaml'
 import sys
 
 import matplotlib
-
-import numpy as np
-
-from astropy.table import Table
-
-from ost_photometry.analyze import plots, utilities
-from ost_photometry.style import Bcolors
 from ost_photometry import checks
-from ost_photometry import utilities as base_utilities
-
-############################################################################
-#                           Routines & definitions                         #
-############################################################################
-
-_EPOCH_NATIVE_SCHEMA = "ost_photometry.epoch_native.v1"
-
-
-def _epoch_native_cmd_slice(tbl: Table) -> Table:
-    if "epoch_id" not in tbl.colnames:
-        return tbl
-    u = np.unique(np.asarray(tbl["epoch_id"]))
-    if len(u) <= 1:
-        return tbl
-    return tbl[np.asarray(tbl["epoch_id"]) == u[0]]
-
-
-def _table_is_epoch_native_photometry(tbl: Table) -> bool:
-    if tbl.meta.get("photometry_schema") == _EPOCH_NATIVE_SCHEMA:
-        return True
-    return "epoch_id" in tbl.colnames and any(
-        n.startswith("mag_cal_") for n in tbl.colnames
-    )
-
+from ost_photometry.analyze.cmd_prepare import load_cmd_table
+from ost_photometry.analyze.plots import plot_cmds_from_table
+from ost_photometry.style import Bcolors
 
 matplotlib.rcParams['pdf.fonttype']: int = 42
 
@@ -152,164 +123,35 @@ matplotlib.rcParams['pdf.fonttype']: int = 42
 
 
 if __name__ == '__main__':
-    ###
-    #   Check output directories
-    #
     checks.check_output_directories(output_dir)
 
-    ###
-    #   Read CMD file
-    #
     print(f'{Bcolors.BOLD}   Read file: {cmd_file_name}{Bcolors.ENDC}')
-
-    _fmt = "ascii.ecsv" if cmd_file_name.lower().endswith(".ecsv") else "ascii"
-    tbl_cmd = Table.read(cmd_file_name, format=_fmt)
-    tbl_cmd = _epoch_native_cmd_slice(tbl_cmd)
-    epoch_native = _table_is_epoch_native_photometry(tbl_cmd)
+    tbl_cmd = load_cmd_table(cmd_file_name)
     if len(tbl_cmd) == 0:
         print(
             f'{Bcolors.FAIL}   The CMD table is empty => EXIT{Bcolors.ENDC}'
         )
         sys.exit()
 
-    #   Loop over all CMDs/colors
-    for filter_id, color in enumerate(filter_color_combinations):
-        filter_list = color.split('-')
-        filter_1 = filter_list[0]
-        filter_2 = filter_list[1]
-
-        #   Check variables
-        file_name, file_type = utilities.check_variable_apparent_cmd(
-            file_name,
-            file_type,
-        )
-
-        #   Extract data (epoch-native ECSV vs student legacy cmd.dat)
-        if epoch_native:
-            c1, c2 = f"mag_cal_{filter_1}", f"mag_cal_{filter_2}"
-            if c1 not in tbl_cmd.colnames or c2 not in tbl_cmd.colnames:
-                raise KeyError(
-                    f"Epoch-native table missing {c1!r} or {c2!r}; "
-                    f"available: {tbl_cmd.colnames!r}"
-                )
-            magnitude_filter_1 = np.asarray(tbl_cmd[c1], dtype=float)
-            magnitude_filter_2 = np.asarray(tbl_cmd[c2], dtype=float)
-        else:
-            magnitude_filter_1 = tbl_cmd[f"{filter_1} [mag]"].value
-            magnitude_filter_2 = tbl_cmd[f"{filter_2} [mag]"].value
-
-        #   Calculate color
-        color = magnitude_filter_1 - magnitude_filter_2
-
-        #   Get errors
-        if do_error_bars:
-            if epoch_native:
-                e1, e2 = f"err_cal_{filter_1}", f"err_cal_{filter_2}"
-                if e1 not in tbl_cmd.colnames or e2 not in tbl_cmd.colnames:
-                    raise KeyError(
-                        f"Epoch-native table missing {e1!r} or {e2!r} for error bars."
-                    )
-                magnitude_filter_1_err = np.asarray(tbl_cmd[e1], dtype=float)
-                magnitude_filter_2_err = np.asarray(tbl_cmd[e2], dtype=float)
-            else:
-                magnitude_filter_1_err = tbl_cmd[f"{filter_1}_err"].value
-                magnitude_filter_2_err = tbl_cmd[f"{filter_2}_err"].value
-            color_err = utilities.err_prop(
-                magnitude_filter_1_err,
-                magnitude_filter_2_err,
-            )
-        else:
-            magnitude_filter_1_err = None
-            magnitude_filter_2_err = None
-            color_err = None
-
-        ###
-        #   Plot CMD
-        #
-        print(
-            f'{Bcolors.BOLD}   Create {Bcolors.UNDERLINE}apparent'
-            f'{Bcolors.ENDC}{Bcolors.BOLD} CMD: {filter_2} vs. '
-            f'{filter_1}-{filter_2}{Bcolors.ENDC}'
-        )
-
-        #   Setup CMD object
-        cmds = plots.MakeCMDs(
-            name_of_star_cluster,
-            file_name,
-            file_type,
-            filter_2,
-            filter_1,
-            color,
-            magnitude_filter_2,
-            color_err=color_err,
-            magnitude_filter_2_err=magnitude_filter_2_err,
-            output_dir=output_dir,
-        )
-
-        #   Plot apparent CMD
-        cmds.plot_apparent_cmd(
-            figure_size_x=figure_size_x,
-            figure_size_y=figure_size_y,
-            y_plot_range_max=y_plot_range_apparent[filter_id][1],
-            y_plot_range_min=y_plot_range_apparent[filter_id][0],
-            x_plot_range_max=x_plot_range_apparent[filter_id][1],
-            x_plot_range_min=x_plot_range_apparent[filter_id][0],
-        )
-
-        #   Check if the absolute CMD can be calculated
-        if m_M == '?':
-            if distance != '?':
-                m_M = 5 * np.log10(float(distance) * 100.)
-            else:
-                m_M = 0.
-
-        if m_M != 0.:
-            print(
-                f'{Bcolors.BOLD}   Create {Bcolors.UNDERLINE}absolute'
-                f'{Bcolors.ENDC}{Bcolors.BOLD} CMD: {filter_2} vs. '
-                f'{filter_1}-{filter_2}{Bcolors.ENDC}'
-            )
-
-            #   Read file with isochrone specification
-            isochrone_configuration = base_utilities.read_params_from_yaml(isochrone_configuration_file)
-            if isochrone_configuration:
-                isochrones = isochrone_configuration.get('isochrones', '')
-                isochrone_type = isochrone_configuration['isochrone_type']
-                isochrone_column_type = isochrone_configuration['isochrone_column_type']
-                isochrone_column = isochrone_configuration['isochrone_column']
-                isochrone_keyword = isochrone_configuration['isochrone_keyword']
-                isochrone_log_age = isochrone_configuration['isochrone_log_age']
-                isochrone_legend = isochrone_configuration['isochrone_legend']
-
-                #   Check isochrone parameters
-                utilities.check_variable_absolute_cmd(
-                    filter_list,
-                    isochrone_column_type,
-                    isochrone_column,
-                )
-            else:
-                isochrones, isochrone_type, isochrone_column_type = '', '', ''
-                isochrone_column, isochrone_keyword = '', ''
-                isochrone_log_age, isochrone_legend = '', ''
-
-            #   Plot absolute CMD with isochrones
-            cmds.plot_absolute_cmd(
-                eB_V,
-                m_M,
-                isochrones,
-                isochrone_type,
-                isochrone_column_type,
-                isochrone_column,
-                isochrone_log_age,
-                isochrone_keyword,
-                isochrone_legend,
-                rv=RV,
-                figure_size_x=figure_size_x,
-                figure_size_y=figure_size_y,
-                y_plot_range_max=y_plot_range_absolute[filter_id][1],
-                y_plot_range_min=y_plot_range_absolute[filter_id][0],
-                x_plot_range_max=x_plot_range_absolute[filter_id][1],
-                x_plot_range_min=x_plot_range_absolute[filter_id][0],
-            )
+    plot_cmds_from_table(
+        tbl_cmd,
+        filter_color_combinations,
+        name_of_star_cluster=name_of_star_cluster,
+        file_name=file_name,
+        file_type=file_type,
+        output_dir=output_dir,
+        e_b_v=eB_V,
+        rv=RV,
+        m_m=m_M,
+        distance=distance,
+        do_error_bars=do_error_bars,
+        figure_size_x=figure_size_x,
+        figure_size_y=figure_size_y,
+        x_plot_range_apparent=x_plot_range_apparent,
+        y_plot_range_apparent=y_plot_range_apparent,
+        x_plot_range_absolute=x_plot_range_absolute,
+        y_plot_range_absolute=y_plot_range_absolute,
+        isochrone_configuration_file=isochrone_configuration_file,
+    )
 
     print(f'{Bcolors.OKGREEN}   Done{Bcolors.ENDC}')

@@ -58,10 +58,11 @@ apply_corrections_to: str = "observation"
 #       - Plot range is automatically adjusted if range is set to ""
 #       - Example for 2 CMD plots aka 3 available filters:
 #           x_plot_range_apparent = [(0., 2.), (-1., 1.)]
-#   Apparent CMD:
+#   Apparent CMD (also used for the isochrone overlay when
+#   apply_corrections_to = "isochrone"):
 x_plot_range_apparent: list[tuple[str | float, str | float]] = [("", ""), ]
 y_plot_range_apparent: list[tuple[str | float, str | float]] = [("", ""), ]
-#   Absolute CMD:
+#   Absolute CMD (only when apply_corrections_to = "observation"):
 x_plot_range_absolute: list[tuple[str | float, str | float]] = [("", ""), ]
 y_plot_range_absolute: list[tuple[str | float, str | float]] = [("", ""), ]
 

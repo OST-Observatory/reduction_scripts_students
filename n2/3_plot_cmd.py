@@ -46,6 +46,10 @@ m_M: str | float = '?'
 
 distance: str | float = '?'
 
+#   Reddening + distance on the stars (absolute CMD) or on the isochrones
+apply_corrections_to: str = "observation"
+# apply_corrections_to: str = "isochrone"
+
 ###
 #   Plot parameter
 #
@@ -152,6 +156,7 @@ if __name__ == '__main__':
         x_plot_range_absolute=x_plot_range_absolute,
         y_plot_range_absolute=y_plot_range_absolute,
         isochrone_configuration_file=isochrone_configuration_file,
+        apply_corrections_to=apply_corrections_to,
     )
 
     print(f'{Bcolors.OKGREEN}   Done{Bcolors.ENDC}')

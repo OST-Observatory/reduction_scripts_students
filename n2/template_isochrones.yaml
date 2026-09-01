@@ -3,7 +3,19 @@
 
 #   Files   (Path to the isochrone file or the directory containing
 #            individual isochrone files)
+#
+#   Either a single path:
 isochrones: ''
+#
+#   Or a catalog — change only `use:` (do not comment/uncomment paths):
+# use: example
+# grids:
+#   example:
+#     isochrones: '~/path/to/isochrones'
+#     FeH: -1.55
+#     Z: 0.0004
+#     Y: 0.2476
+#     alpha_Fe: 0.0
 
 #   Type    -> either 'directory' or 'file'
 #              directory = individual isochrone files located in a
@@ -55,4 +67,11 @@ isochrone_log_age: true
 
 #   Plot legend for isochrones?
 isochrone_legend: true
+
+#   Optional metadata for the CMD info box (omit any unknown field)
+# isochrone_set: "BaSTI-IAC"
+# FeH: -1.55
+# Z: 0.0004
+# Y: 0.2476
+# alpha_Fe: 0.0
 ...

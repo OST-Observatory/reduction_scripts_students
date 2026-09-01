@@ -90,7 +90,7 @@ do_error_bars: bool = False
 
 ###
 #   Isochrones in the archive
-#   -> Set YAML file
+#   -> Set YAML file; pick the grid inside that YAML with `use:`
 #
 #   NO isochrones
 isochrone_configuration_file: str = ""

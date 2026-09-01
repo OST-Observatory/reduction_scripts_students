@@ -1,17 +1,69 @@
 --- # YY isochrones
-#   Files
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00g.x74z01a0o2v2"
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00g.x74z01a2o2v2"
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00g.x74z01a4o2v2"
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00l.x74z01a0o2v2"
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00l.x74z01a2o2v2"
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00l.x74z01a4o2v2"
-isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z02/yy00g.x71z02a0o2v2"
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z02/yy00l.x71z02a0o2v2"
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z004/yy00g.x758z004a0o2v2"
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z004/yy00l.x758z004a4o2v2"
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z0001/yy00g.x7697z0001a0o2v2"
-# isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z0001/yy00l.x7697z0001a4o2v2"
+#   Pick a grid below (do not comment/uncomment paths)
+#   Z/Y from the filename (X+Y+Z=1); a0/a2/a4 → [α/Fe]
+use: z02_g_a0
+
+grids:
+  z01_g_a0:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00g.x74z01a0o2v2"
+    Z: 0.01
+    Y: 0.25
+    alpha_Fe: 0.0
+  z01_g_a2:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00g.x74z01a2o2v2"
+    Z: 0.01
+    Y: 0.25
+    alpha_Fe: 0.2
+  z01_g_a4:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00g.x74z01a4o2v2"
+    Z: 0.01
+    Y: 0.25
+    alpha_Fe: 0.4
+  z01_l_a0:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00l.x74z01a0o2v2"
+    Z: 0.01
+    Y: 0.25
+    alpha_Fe: 0.0
+  z01_l_a2:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00l.x74z01a2o2v2"
+    Z: 0.01
+    Y: 0.25
+    alpha_Fe: 0.2
+  z01_l_a4:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z01/yy00l.x74z01a4o2v2"
+    Z: 0.01
+    Y: 0.25
+    alpha_Fe: 0.4
+  z02_g_a0:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z02/yy00g.x71z02a0o2v2"
+    Z: 0.02
+    Y: 0.27
+    alpha_Fe: 0.0
+  z02_l_a0:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z02/yy00l.x71z02a0o2v2"
+    Z: 0.02
+    Y: 0.27
+    alpha_Fe: 0.0
+  z004_g_a0:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z004/yy00g.x758z004a0o2v2"
+    Z: 0.004
+    Y: 0.238
+    alpha_Fe: 0.0
+  z004_l_a4:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z004/yy00l.x758z004a4o2v2"
+    Z: 0.004
+    Y: 0.238
+    alpha_Fe: 0.4
+  z0001_g_a0:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z0001/yy00g.x7697z0001a0o2v2"
+    Z: 0.0001
+    Y: 0.2302
+    alpha_Fe: 0.0
+  z0001_l_a4:
+    isochrones: "~/isochrone_database/yy_isochrones/V2/Iso/z0001/yy00l.x7697z0001a4o2v2"
+    Z: 0.0001
+    Y: 0.2302
+    alpha_Fe: 0.4
 
 #   Type
 isochrone_type: 'file'
@@ -65,4 +117,8 @@ isochrone_log_age: false
 
 #   Plot legend for isochrones?
 isochrone_legend: true
+
+#   Optional metadata for the CMD info box (omit any unknown field)
+#   Composition (Z, Y, [α/Fe]) is set per grid above.
+isochrone_set: "YY"
 ...

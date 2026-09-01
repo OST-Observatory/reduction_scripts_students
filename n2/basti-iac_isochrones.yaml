@@ -2,9 +2,14 @@
 #   basti-iac isochrones -> [Fe/H]=−1.58, Z = 0.0004, Y = 0.2476, [α/Fe]=0,
 #   overshooting, diffusion, mass loss efficiency η = 0.3
 
-#   Files
-#   isochrones: "~/isochrone_database/basti-iac/FEHm155/all/"
-isochrones: "~/isochrone_database/basti-iac/FEHm155/1Gyr/"
+#   Pick a grid below (do not comment/uncomment paths)
+use: 1Gyr
+
+grids:
+  all:
+    isochrones: "~/isochrone_database/basti-iac/FEHm155/all/"
+  1Gyr:
+    isochrones: "~/isochrone_database/basti-iac/FEHm155/1Gyr/"
 
 #   Type
 isochrone_type: 'directory'
@@ -68,4 +73,11 @@ isochrone_log_age: true
 
 #   Plot legend for isochrones?
 isochrone_legend: true
+
+#   Optional metadata for the CMD info box (omit any unknown field)
+isochrone_set: "BaSTI-IAC"
+FeH: -1.55
+Z: 0.0004
+Y: 0.2476
+alpha_Fe: 0.0
 ...

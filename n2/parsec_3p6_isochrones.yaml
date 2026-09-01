@@ -1,10 +1,16 @@
 ---
 #   PARCES isochrones (CMD 3.6)
 
-#   Files
-# isochrones: '~/isochrone_database/parsec_iso/3p6/solar_0p2Gyr/iso_parsec_0p2Gyr.dat'
-# isochrones: '~/isochrone_database/parsec_iso/3p6/solar_0p5Gyr/iso_parsec_0p5Gyr.dat'
-isochrones: '~/isochrone_database/parsec_iso/3p6/solar_1Gyr/iso_parsec_1Gyr.dat'
+#   Pick a grid below (do not comment/uncomment paths)
+use: solar_1Gyr
+
+grids:
+  solar_0p2Gyr:
+    isochrones: '~/isochrone_database/parsec_iso/3p6/solar_0p2Gyr/iso_parsec_0p2Gyr.dat'
+  solar_0p5Gyr:
+    isochrones: '~/isochrone_database/parsec_iso/3p6/solar_0p5Gyr/iso_parsec_0p5Gyr.dat'
+  solar_1Gyr:
+    isochrones: '~/isochrone_database/parsec_iso/3p6/solar_1Gyr/iso_parsec_1Gyr.dat'
 
 #   Type
 isochrone_type: 'file'
@@ -73,4 +79,8 @@ isochrone_log_age: true
 
 #   Plot legend for isochrones?
 isochrone_legend: true
+
+#   Optional metadata for the CMD info box (omit any unknown field)
+isochrone_set: "PARSEC 3.6"
+FeH: 0.0
 ...

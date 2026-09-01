@@ -88,6 +88,14 @@ do_error_bars: bool = False
 max_photometric_err: float | None = None
 # max_photometric_err: float | None = 0.2
 
+#   Colour members by photometric σ (needs do_error_bars). Default off.
+color_by_error: bool = False
+# color_by_error: bool = True
+
+#   Write isochrone-fit ECSV + residual CMD. Default off.
+cmd_diagnostics: bool = False
+# cmd_diagnostics: bool = True
+
 ############################################################################
 #         Isochrone configuration: modify the file in this section         #
 ############################################################################
@@ -164,6 +172,8 @@ if __name__ == '__main__':
         isochrone_configuration_file=isochrone_configuration_file,
         apply_corrections_to=apply_corrections_to,
         max_photometric_err=max_photometric_err,
+        color_by_error=color_by_error,
+        cmd_diagnostics=cmd_diagnostics,
     )
 
     print(f'{Bcolors.OKGREEN}   Done{Bcolors.ENDC}')

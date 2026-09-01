@@ -84,26 +84,31 @@ output_dir: str = "output"
 # do_error_bars: bool = True
 do_error_bars: bool = False
 
+#   Drop stars with photometric error above this (mag). None: only NaN/Inf.
+max_photometric_err: float | None = None
+# max_photometric_err: float | None = 0.2
+
 ############################################################################
 #         Isochrone configuration: modify the file in this section         #
 ############################################################################
 
 ###
 #   Isochrones in the archive
-#   -> Set YAML file; pick the grid inside that YAML with `use:`
+#   -> Set YAML file; pick the grid inside that YAML with `use:`.
+#      Leave only one assignment active (the last one would win).
 #
 #   NO isochrones
-isochrone_configuration_file: str = ""
+# isochrone_configuration_file: str = ""
 
 #   YY isochrones
-isochrone_configuration_file: str = 'yy_isochrones.yaml'
+# isochrone_configuration_file: str = 'yy_isochrones.yaml'
 
 #   basti-iac isochrones -> [Fe/H]=−1.58, Z = 0.0004, Y = 0.2476, [α/Fe]=0,
 #   overshooting, diffusion, mass loss efficiency η = 0.3
-isochrone_configuration_file: str = 'basti-iac_isochrones.yaml'
+# isochrone_configuration_file: str = 'basti-iac_isochrones.yaml'
 
 #   PARCES isochrones (CMD 3.6)
-isochrone_configuration_file: str = 'parsec_3p6_isochrones.yaml'
+# isochrone_configuration_file: str = 'parsec_3p6_isochrones.yaml'
 
 #   PARCES isochrones (CMD 3.6, no TP-AGB evolution)
 isochrone_configuration_file: str = 'parsec_3p6_noTP-AGB_isochrones.yaml'
@@ -158,6 +163,7 @@ if __name__ == '__main__':
         y_plot_range_absolute=y_plot_range_absolute,
         isochrone_configuration_file=isochrone_configuration_file,
         apply_corrections_to=apply_corrections_to,
+        max_photometric_err=max_photometric_err,
     )
 
     print(f'{Bcolors.OKGREEN}   Done{Bcolors.ENDC}')

@@ -59,6 +59,13 @@ fwhm: float | None = None
 fwhm_estimate_min: float = 2.0
 fwhm_estimate_max: float = 15.0
 
+#   Detection threshold = this × MAD-RMS of the sky-subtracted frame.
+#   Single-epoch C7 frames need ~10 (package default 5 is for stacked N2).
+#   Lower this if faint stars vanish; raise it if the finder still tags noise.
+multiplier_background_rms: float = 10.0
+#   Same for residual re-find in ePSF photometry (only used if method is PSF).
+multiplier_background_rms_epsf: float = 10.0
+
 ############################################################################
 #   Define filter 1 (e.g., U, B,V,...)
 #
@@ -322,6 +329,8 @@ if __name__ == '__main__':
         fwhm_object_psf=fwhm_for_pipeline,
         fwhm_estimate_min=fwhm_estimate_min,
         fwhm_estimate_max=fwhm_estimate_max,
+        multiplier_background_rms=multiplier_background_rms,
+        multiplier_background_rms_epsf=multiplier_background_rms_epsf,
         photometry_extraction_method=photometry_extraction_method,
         radius_aperture=radius_aperture,
         inner_annulus_radius=inner_annulus_radius,

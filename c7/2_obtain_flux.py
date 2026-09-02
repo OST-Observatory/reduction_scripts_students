@@ -367,6 +367,8 @@ if __name__ == '__main__':
         skip_derive_limiting_magnitude=True,
         # Cap individual inter-filter pair PDFs (None=all, 0=overview only):
         # diagnostic_plots__correlation_inter_filter_max_pair_plots=25,
+        # Cap per-epoch calibration QC PDFs (None=all, 0=skip; default 25):
+        # diagnostic_plots__calibration_max_epoch_plots=25,
     )
 
     if _mode == "preset":

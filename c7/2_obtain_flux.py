@@ -337,7 +337,7 @@ if __name__ == '__main__':
         outer_annulus_radius=outer_annulus_radius,
         radii_unit=radii_unit,
         reference_image_index=reference_image_index,
-        wcs_method="astrometry",
+        wcs_method="astap",
         max_pixel_between_objects=3,
         ooi_correlation_strategy=1,
         cross_identification_limit=1,

@@ -1,6 +1,8 @@
 #! /usr/bin/python
 # -*- coding: utf-8 -*-
 
+"""Plot light curves from the pipeline table ``output/tables/light_curves.ecsv``."""
+
 ############################################################################
 #                              Object parameters                           #
 ############################################################################
@@ -10,15 +12,18 @@ name_star: str = "?"
 
 #   Coordinates - Format:  ra = hh:mm:ss e.g. 19:44:42.8539591894
 #                         dec = dd:am:as e.g. +54:49:42.887193554
+#               - used only if object_id is None (nearest source in the table)
 ra_obj: str = "??:??:??"
 dec_obj: str = "+??:??:??"
+
+object_id: int | None = None
 
 #   Date of the minimum (UTC)
 #   "yyyy:mm:ddThh:mm:ss" e.g., "2020-09-18T01:00:00"
 transit_time: str = "?"
 
 #   Period (Algol: p=2.867315d, RZ Cas: p=1.1952499d, TV Cas: p=1.81259d)
-period: float | str = '?'
+period: float | str = "?"
 
 ############################################################################
 #                Additional options: only edit if necessary                #
@@ -28,217 +33,143 @@ period: float | str = '?'
 #   Light curve parameters
 #
 #   Filter
-filter_: str = '?'
+filter_: str = "?"
 
-#   Color - Format "filter_1-filter_2" such as "B-V", can also be '' or None
-color: str = '?-?'
+#   Colour in the table (e.g. "B-V") if the pipeline wrote colour rows; or "" / None
+color: str | None = None
 
 #   Path to store the output (will usually be 'output',
 #   but it can be changed as needed).
-output_dir: str = 'output'
+output_dir: str = "output"
+# Default: <output_dir>/tables/light_curves.ecsv
 
 #   Optional input path. If None, auto-detect under ``output_dir/tables/``.
-#   Can be a single CSV file path or a directory containing multiple CSV files.
 input_path: str | None = None
 
-#   Default CSV from ``2_obtain_flux.py`` / pipeline: ``light_curve_<name>_<filter>.csv``
-#   (``<name>`` as in ``Observation``, often with spaces). Legacy runs used a color
-#   suffix, e.g. ``..._V_B-V.csv`` — ``resolve_input_files`` tries several patterns.
-_color_suffix = "" if color in (None, "", "?-?") else f"_{color}"
-file_name: str = (
-    f'{output_dir}/tables/light_curve_{name_star.replace(" ", "_")}_{filter_}.csv'
-    if filter_ not in (None, "?")
-    else f'{output_dir}/tables/light_curve_{name_star.replace(" ", "_")}.csv'
-)
 
 #   Binning in days
 binning_factor: float = 0.0001
+binning_factor: float | None = None
+
+#   Output file type
+file_type: str = "pdf"
 
 ############################################################################
 #                               Libraries                                  #
 ############################################################################
 
-from ost_photometry.analyze import plots
 import os
-from glob import glob
-from astropy.table import vstack
-import re
+import sys
 
-from astropy.timeseries import TimeSeries
+import astropy.units as u
+import numpy as np
+from astropy.coordinates import SkyCoord
+from astropy.table import Table
+
+from ost_photometry.analyze.post_processing.light_curve import (
+    object_id_from_epoch_native_sky,
+    plot_from_light_curves_table,
+)
 
 ############################################################################
 #                                  Main                                    #
 ############################################################################
 
-def infer_filter_from_filename(path: str) -> str | None:
-    base = os.path.basename(path)
-    match = re.search(r'^light_curve_.*?_([A-Za-z]+)(?:_|\.|$)', base)
-    return match.group(1) if match else None
 
-
-def infer_filter_from_timeseries(ts_in: TimeSeries) -> str | None:
-    candidate_filters = []
-    for column_name in ts_in.colnames:
-        if column_name == 'time' or column_name.endswith('_err'):
-            continue
-        if f"{column_name}_err" in ts_in.colnames:
-            candidate_filters.append(column_name)
-    if not candidate_filters:
-        return None
-    if filter_ not in (None, '?') and filter_ in candidate_filters:
-        return filter_
-    return sorted(candidate_filters)[0]
-
-
-def resolve_input_files() -> list[str]:
+def _resolve_table_path() -> str:
     if input_path is not None:
-        if os.path.isdir(input_path):
-            return sorted(glob(os.path.join(input_path, "*.csv")))
-        return [input_path]
-
-    tables_dir = os.path.join(output_dir, "tables")
-    if os.path.isfile(file_name):
-        return [file_name]
-
-    name_raw = name_star.strip()
-    name_san = name_raw.replace(" ", "_")
-    names_try = list(dict.fromkeys([name_raw, name_san]))
-
-    def _candidates() -> list[str]:
-        out: list[str] = []
-        if filter_ not in (None, "?"):
-            for nm in names_try:
-                out.append(os.path.join(tables_dir, f"light_curve_{nm}_{filter_}.csv"))
-            if _color_suffix:
-                for nm in names_try:
-                    out.append(
-                        os.path.join(
-                            tables_dir,
-                            f"light_curve_{nm}_{filter_}{_color_suffix}.csv",
-                        )
-                    )
-        for nm in names_try:
-            out.append(os.path.join(tables_dir, f"light_curve_{nm}.csv"))
-        return out
-
-    for p in _candidates():
-        if os.path.isfile(p):
-            return [p]
-
-    if filter_ not in (None, "?"):
-        pat = os.path.join(tables_dir, f"light_curve_*_{filter_}.csv")
-        found = sorted(glob(pat))
-        if found:
-            return found
-
-    pat_all = os.path.join(tables_dir, "light_curve_*.csv")
-    found_all = sorted(glob(pat_all))
-    if found_all:
-        return found_all
-
-    return []
-
-
-def plot_single_file(csv_path: str) -> None:
-    ts = TimeSeries.read(
-        csv_path,
-        format='ascii.csv',
-        time_column='time',
-        time_format='jd',
-    )
-    ts.sort('time')
-
-    flt = filter_
-    if flt in (None, "?"):
-        flt = infer_filter_from_filename(csv_path) or infer_filter_from_timeseries(ts)
-    if flt is None or f"{flt}_err" not in ts.colnames:
-        raise ValueError(
-            f"Could not determine magnitude column for {csv_path!r}; "
-            f"set ``filter_`` to a band (e.g. 'V'). Columns: {ts.colnames!r}"
-        )
-
-    plots.light_curve_jd(
-        ts,
-        flt,
-        f"{flt}_err",
-        output_dir,
-        name_object=name_star,
+        if os.path.isfile(input_path):
+            return input_path
+        raise FileNotFoundError(f"Light-curve table not found: {input_path!r}")
+    path = os.path.join(output_dir, "tables", "light_curves.ecsv")
+    if os.path.isfile(path):
+        return path
+    raise FileNotFoundError(
+        f"No {path!r}. Run ``2_obtain_flux.py`` with skip_light_curve=False first."
     )
 
-    if (transit_time is not None and transit_time != '?'
-            and period is not None and period != '?' and period > 0.0):
-        plots.light_curve_fold(
-            ts,
-            flt,
-            f"{flt}_err",
-            output_dir,
-            transit_time,
-            period,
-            binning_factor=binning_factor,
-            name_object=name_star,
-        )
+
+def _optional_sky() -> SkyCoord | None:
+    ra_s, dec_s = ra_obj.strip(), dec_obj.strip()
+    if (not ra_s or "?" in ra_s) and (not dec_s or "?" in dec_s):
+        return None
+    if "?" in ra_s or "?" in dec_s or not ra_s or not dec_s:
+        raise ValueError("Provide both sexagesimal RA and Dec, or leave both as placeholders.")
+    return SkyCoord(ra_s, dec_s, unit=(u.hourangle, u.deg), frame="icrs")
 
 
-def plot_directory(files: list[str]) -> None:
-    filter_to_ts_list: dict[str, list[TimeSeries]] = {}
-    for _path in files:
-        ts_i = TimeSeries.read(
-            _path,
-            format='ascii.csv',
-            time_column='time',
-            time_format='jd',
-        )
-
-        inferred = infer_filter_from_filename(_path)
-        if inferred is None or (inferred not in ts_i.colnames or f"{inferred}_err" not in ts_i.colnames):
-            inferred = infer_filter_from_timeseries(ts_i)
-
-        if inferred is None:
-            raise ValueError(f"Could not infer filter for file: {_path}")
-
-        filter_to_ts_list.setdefault(inferred, []).append(ts_i)
-
-    for current_filter, ts_parts in sorted(filter_to_ts_list.items()):
-        ts_combined = ts_parts[0] if len(ts_parts) == 1 else vstack(ts_parts, metadata_conflicts='silent')
-        ts_combined.sort('time')
-
-        plots.light_curve_jd(
-            ts_combined,
-            current_filter,
-            f"{current_filter}_err",
-            output_dir,
-            name_object=name_star,
-        )
+def _resolve_id(tbl: Table) -> int:
+    if object_id is not None:
+        return int(object_id)
+    sky = _optional_sky()
+    if sky is not None:
+        return object_id_from_epoch_native_sky(tbl, sky)
+    names = np.asarray(tbl["object_name"]).astype(str) if "object_name" in tbl.colnames else None
+    if names is not None and name_star not in (None, "?", ""):
+        want = name_star.strip()
+        for sid, nm in zip(
+            np.asarray(tbl["id"]).astype(int),
+            names,
+            strict=False,
+        ):
+            if str(nm).strip() == want or str(nm).strip().replace(" ", "_") == want.replace(
+                " ", "_"
+            ):
+                return int(sid)
+    raise ValueError(
+        "Set object_id, sky coordinates, or name_star matching object_name in light_curves.ecsv."
+    )
 
 
-        if (transit_time is not None and transit_time != '?'
-            and period is not None and period != '?' and period > 0.0):
-            plots.light_curve_fold(
-                ts_combined,
-                current_filter,
-                f"{current_filter}_err",
-                output_dir,
-                transit_time,
-                period,
-                binning_factor=binning_factor,
-                name_object=name_star,
+def _filters_to_plot(tbl: Table) -> list[str]:
+    available = sorted(set(np.asarray(tbl["filter"]).astype(str)))
+    out: list[str] = []
+    if filter_ not in (None, "?", ""):
+        if filter_ not in available:
+            raise ValueError(
+                f"Filter {filter_!r} not in light_curves.ecsv columns {available}"
             )
+        out.append(filter_)
+    if color not in (None, "", "?-?", "?"):
+        if color in available:
+            out.append(str(color))
+        else:
+            print(f"Note: colour {color!r} not in table (have {available}).", file=sys.stderr)
+    if not out:
+        # Prefer photometric bands over colour strings
+        bands = [f for f in available if "-" not in f]
+        out = bands or available
+    return list(dict.fromkeys(out))
 
 
 def main() -> None:
-    input_files = resolve_input_files()
-    if not input_files:
-        raise FileNotFoundError(
-            "No light-curve CSV found under "
-            f"{os.path.join(output_dir, 'tables')!r}. "
-            "Set ``input_path`` or run ``2_obtain_flux.py`` first."
+    path = _resolve_table_path()
+    tbl = Table.read(path)
+    sid = _resolve_id(tbl)
+    per = period
+    if per == "?" or per is None:
+        per = None
+    else:
+        try:
+            per = float(per)
+        except (TypeError, ValueError):
+            per = None
+    tt = None if transit_time in (None, "?") else transit_time
+    name = name_star if name_star not in (None, "?") else str(sid)
+
+    for filt in _filters_to_plot(tbl):
+        plot_from_light_curves_table(
+            tbl,
+            sid,
+            filt,
+            output_dir,
+            name_object=name,
+            file_type=file_type,
+            transit_time=tt,
+            period=per,
+            binning_factor=binning_factor,
         )
 
-    if len(input_files) > 1 or (input_path is not None and os.path.isdir(input_path)):
-        plot_directory(input_files)
-    else:
-        plot_single_file(input_files[0])
 
-
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()

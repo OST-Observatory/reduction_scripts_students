@@ -254,7 +254,7 @@ n_allowed_non_detections_object: int = 5
 ############################################################################
 #   Light curve options
 #
-#   Binning in days (set to None to deactivate)
+#   Phase-bin width for folded curves (0–1), or None for no binning
 # binning_factor: float | None = 0.0001
 # binning_factor: float | None = 0.0002
 binning_factor: float | None = None
@@ -346,6 +346,9 @@ if __name__ == '__main__':
         calibration_source=calibration_source,
         calibration_catalog_mag_range=magnitude_range,
         color_indices=_color_idx,
+        light_curve_color=(
+            f"{filter_list[0]}-{filter_list[1]}" if len(filter_list) >= 2 else None
+        ),
         aperture_radius=radius_aperture,
         extract_only_circular_region=False,
         identify_cluster_gaia_data=False,

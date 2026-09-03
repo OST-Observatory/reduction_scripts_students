@@ -67,7 +67,9 @@ multiplier_background_rms: float = 10.0
 multiplier_background_rms_epsf: float = 10.0
 
 ############################################################################
-#   Define filter 1 (e.g., U, B,V,...)
+#   Define filter 1 (e.g., U, B, V, Clear, ...)
+#   Clear / C / luminance / white have no catalog ZP. The pipeline then
+#   writes a relative flux light curve (continuum ≈ 1) instead of mag_cal_*.
 #
 filter_1: str = 'V'
 

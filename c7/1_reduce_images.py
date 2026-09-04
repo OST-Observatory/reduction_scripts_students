@@ -57,7 +57,7 @@ exposure_time_tolerance: float = 5.
 temperature_tolerance: float = 5.
 
 #   Number of cores used for multiprocessing
-n_cores_multiprocessing: int = 4
+n_cores_multiprocessing: int = 8
 
 ############################################################################
 #                               Libraries                                  #

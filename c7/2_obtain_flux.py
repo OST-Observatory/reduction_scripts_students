@@ -66,6 +66,9 @@ multiplier_background_rms: float = 10.0
 #   Same for residual re-find in ePSF photometry (only used if method is PSF).
 multiplier_background_rms_epsf: float = 10.0
 
+#   Worker processes for multi-image extraction. ``None`` = half the CPUs.
+n_cores_multiprocessing: int | None = 8
+
 ############################################################################
 #   Define filter 1 (e.g., U, B, V, Clear, ...)
 #   Clear / C / luminance / white have no catalog ZP. The pipeline then
@@ -331,6 +334,7 @@ if __name__ == '__main__':
         fwhm_object_psf=fwhm_for_pipeline,
         fwhm_estimate_min=fwhm_estimate_min,
         fwhm_estimate_max=fwhm_estimate_max,
+        n_cores_multiprocessing=n_cores_multiprocessing,
         multiplier_background_rms=multiplier_background_rms,
         multiplier_background_rms_epsf=multiplier_background_rms_epsf,
         photometry_extraction_method=photometry_extraction_method,

@@ -43,6 +43,8 @@ RV: float = 3.1
 
 #   Give either distance modulus of the cluster or the distance in kpc
 m_M: str | float = '?'
+#   Optional 1-sigma uncertainty on the distance modulus. Leave None if unknown.
+m_M_err: float | None = None
 
 distance: str | float = '?'
 
@@ -163,6 +165,7 @@ if __name__ == '__main__':
         m_m=m_M,
         distance=distance,
         do_error_bars=do_error_bars,
+        m_m_err=m_M_err,
         figure_size_x=figure_size_x,
         figure_size_y=figure_size_y,
         x_plot_range_apparent=x_plot_range_apparent,

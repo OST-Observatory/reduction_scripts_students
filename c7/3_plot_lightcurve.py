@@ -1,7 +1,10 @@
 #! /usr/bin/python
 # -*- coding: utf-8 -*-
 
-"""Plot light curves from the pipeline table ``output/tables/light_curves.ecsv``."""
+"""Plot light curves from the pipeline table ``output/tables/light_curves.ecsv``.
+
+To overlay several nights, use ``5_compare_nights.py``.
+"""
 
 ############################################################################
 #                              Object parameters                           #

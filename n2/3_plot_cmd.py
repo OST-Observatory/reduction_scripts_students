@@ -44,9 +44,13 @@ RV: float = 3.1
 #   Give either distance modulus of the cluster or the distance in kpc
 m_M: str | float = '?'
 #   Optional 1-sigma uncertainty on the distance modulus. Leave None if unknown.
+#   Used when m_M is set (takes precedence over distance / distance_err).
 m_M_err: float | None = None
 
 distance: str | float = '?'
+#   Optional 1-sigma uncertainty on the distance in kpc. Used when distance
+#   is set and m_M is unset; converted to σ(m−M) = (5/ln 10)·(σ_d/d).
+distance_err: float | None = None
 
 #   Reddening + distance on the stars (absolute CMD) or on the isochrones
 apply_corrections_to: str = "observation"
@@ -166,6 +170,7 @@ if __name__ == '__main__':
         distance=distance,
         do_error_bars=do_error_bars,
         m_m_err=m_M_err,
+        distance_err=distance_err,
         figure_size_x=figure_size_x,
         figure_size_y=figure_size_y,
         x_plot_range_apparent=x_plot_range_apparent,

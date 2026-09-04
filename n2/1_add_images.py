@@ -124,6 +124,8 @@ if __name__ == "__main__":
         target_name=target_name,
         temperature_tolerance=temperature_tolerance,
         n_cores_multiprocessing=n_cores_multiprocessing,
+        # Pixel match (default) or WCS reproject: shift_method="wcs"
+        # (uses wcs_method, default ASTAP, if a frame has no celestial WCS).
         shift_method="aa_true",
         shift_all=True,
     )

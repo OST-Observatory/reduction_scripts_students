@@ -229,6 +229,11 @@ calibration_source: str = 'APASS'
 #   Magnitude limit of the calibration stars
 magnitude_range: tuple[float, float] = (12., 15.)
 
+#   On-sky match to the calibration catalog (arcsec). Independent of
+#   inter-filter ``separation_limit`` (default 1"). Tighten in crowded fields
+#   to cut the catalog-crossmatch tail.
+calibration_match_radius_arcsec: float = 1.0
+
 ############################################################################
 #   Aperture options
 #
@@ -364,6 +369,7 @@ if __name__ == '__main__':
         separation_limit=separation_limit * u.arcsec,
         calibration_source=calibration_source,
         calibration_catalog_mag_range=magnitude_range,
+        calibration_match_radius=calibration_match_radius_arcsec * u.arcsec,
         color_indices=_color_idx,
         light_curve_color=(
             f"{filter_list[0]}-{filter_list[1]}" if len(filter_list) >= 2 else None

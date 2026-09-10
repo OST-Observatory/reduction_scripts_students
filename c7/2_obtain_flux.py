@@ -264,7 +264,9 @@ radii_unit: str = 'arcsec'
 #   ID of the reference image (``0`` or ``"auto"`` = most detections / sharpest)
 reference_image_index: int | str = "auto"
 
-#   Maximal separation between two objects in arcsec
+#   Maximal sky separation between two objects in arcsec (inter-filter and
+#   unaligned intra-filter). Tightening this does not hide HAT-P-20: OOI
+#   identification uses at least 5" unless you set ooi_separation_limit.
 separation_limit: float = 5.
 
 #   Sparse tracks: keep stars that miss some frames (long C7 series).
@@ -275,12 +277,21 @@ min_detection_fraction: float = 0.3
 #   force near-completeness on a long series.
 n_allowed_non_detections_object: int = 5
 
-#   Solve a WCS per frame (needed when images are not warped onto one grid).
-wcs_solve_all_images: bool = True
+#   Independent ASTAP solutions on aligned frames make the same pixel look
+#   like a different sky position and mix track IDs. Keep False when
+#   ``1_reduce_images.py`` used shift_all=True (``aa_true`` or ``wcs``).
+#   True only for native (unwarped) pixels.
+wcs_solve_all_images: bool = False
 
-#   With a WCS on every frame, match each exposure to the reference on the
-#   sky (``to_reference``). ``sequential`` can walk onto a neighbour across
-#   night gaps and assign the same ``id`` to different stars.
+#   Intra-filter tracks: ``auto`` uses pixel matching when the series is
+#   registered (``aa_true`` or ``wcs`` with shift_all). ``sky`` is for
+#   unaligned native extract.
+correlation_coordinates: str = "auto"
+# correlation_coordinates: str = "pixel"
+# correlation_coordinates: str = "sky"
+
+#   ``to_reference`` with pixel matching keeps identity on the reference
+#   grid. ``sequential`` is a fallback when frames are not registered.
 correlation_link_mode: str = "to_reference"
 # correlation_link_mode: str = "sequential"
 
@@ -380,6 +391,7 @@ if __name__ == '__main__':
         min_detection_fraction=min_detection_fraction,
         wcs_solve_all_images=wcs_solve_all_images,
         correlation_link_mode=correlation_link_mode,
+        correlation_coordinates=correlation_coordinates,
         separation_limit=separation_limit * u.arcsec,
         calibration_source=calibration_source,
         calibration_catalog_mag_range=magnitude_range,

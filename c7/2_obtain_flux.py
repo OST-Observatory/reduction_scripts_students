@@ -261,15 +261,26 @@ radii_unit: str = 'arcsec'
 ############################################################################
 #   Correlation options
 #
-#   ID of the reference image
-reference_image_index: int = 0
+#   ID of the reference image (``0`` or ``"auto"`` = most detections / sharpest)
+reference_image_index: int | str = "auto"
 
 #   Maximal separation between two objects in arcsec
 separation_limit: float = 5.
 
-#   Limit for the number of images on which an object is not found.
-#   When this limit is reached, the corresponding object is discarded.
+#   Sparse tracks: keep stars that miss some frames (long C7 series).
+require_complete_intersection: bool = False
+#   Keep a track if it is detected on at least this fraction of frames.
+min_detection_fraction: float = 0.3
+#   Miss-count floor; combined with the fraction so a small number does not
+#   force near-completeness on a long series.
 n_allowed_non_detections_object: int = 5
+
+#   Solve a WCS per frame (needed when images are not warped onto one grid).
+wcs_solve_all_images: bool = True
+
+#   ``to_reference`` matches every frame to the reference; ``sequential``
+#   chain-matches neighbours (better with pointing drift).
+correlation_link_mode: str = "sequential"
 
 ############################################################################
 #   Light curve options
@@ -363,6 +374,10 @@ if __name__ == '__main__':
         radii_unit=radii_unit,
         reference_image_index=reference_image_index,
         n_allowed_non_detections_object=n_allowed_non_detections_object,
+        require_complete_intersection=require_complete_intersection,
+        min_detection_fraction=min_detection_fraction,
+        wcs_solve_all_images=wcs_solve_all_images,
+        correlation_link_mode=correlation_link_mode,
         separation_limit=separation_limit * u.arcsec,
         calibration_source=calibration_source,
         calibration_catalog_mag_range=magnitude_range,

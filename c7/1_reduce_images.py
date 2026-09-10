@@ -59,6 +59,17 @@ temperature_tolerance: float = 5.
 #   Number of cores used for multiprocessing
 n_cores_multiprocessing: int = 8
 
+#   Alignment backend. ``aa_true`` (astroalign) is the C7 default. Use
+#   ``wcs`` if similarity transforms paint too many NaNs (large dithers).
+shift_method: str = "aa_true"
+# shift_method: str = "wcs"
+
+#   Warp every science frame onto the reference grid. Set False for native
+#   pixels; then ``2_obtain_flux.py`` must keep ``wcs_solve_all_images=True``
+#   so analysis matches on the sky.
+shift_all: bool = True
+# shift_all: bool = False
+
 ############################################################################
 #                               Libraries                                  #
 ############################################################################
@@ -112,7 +123,8 @@ if __name__ == '__main__':
         rm_cosmic_rays=rm_cosmic_rays,
         exposure_time_tolerance=exposure_time_tolerance,
         stack_images=False,
-        shift_all=True,
+        shift_all=shift_all,
+        shift_method=shift_method,
         temperature_tolerance=temperature_tolerance,
         n_cores_multiprocessing=n_cores_multiprocessing,
     )

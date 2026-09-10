@@ -278,9 +278,11 @@ n_allowed_non_detections_object: int = 5
 #   Solve a WCS per frame (needed when images are not warped onto one grid).
 wcs_solve_all_images: bool = True
 
-#   ``to_reference`` matches every frame to the reference; ``sequential``
-#   chain-matches neighbours (better with pointing drift).
-correlation_link_mode: str = "sequential"
+#   With a WCS on every frame, match each exposure to the reference on the
+#   sky (``to_reference``). ``sequential`` can walk onto a neighbour across
+#   night gaps and assign the same ``id`` to different stars.
+correlation_link_mode: str = "to_reference"
+# correlation_link_mode: str = "sequential"
 
 ############################################################################
 #   Light curve options

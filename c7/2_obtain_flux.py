@@ -8,7 +8,7 @@ Runs ``Observation.run_pipeline`` with ``extraction_mode="multi"`` (directories
 per filter), then calibration and ``LightCurveStep`` (CSV under
 ``<output_dir>/tables/light_curve_*.csv``, plots under ``<output_dir>/results/lightcurves/``).
 
-Calibration via ``PipelineConfig.from_preset`` (``linear_fit_per_night``, ``linear_fit_per_night_extinction``)
+Calibration via ``PipelineConfig.from_preset`` (``linear_fit_per_image``, ``linear_fit_per_image_extinction``)
 or fine-grained ``calibration_strategy`` / ``calibration_grouping`` / ``extinction_mode`` fields.
 """
 
@@ -120,20 +120,21 @@ calibration_config_mode: str = "preset"
 ###
 #   Preset (used when calibration_config_mode == "preset")
 #
-#   ``linear_fit_per_night`` — linear T/ZP per night, no extinction (good starting point).
-#   ``linear_fit_per_night_extinction`` — same with fitted extinction when airmass varies.
+#   ``linear_fit_per_image`` — T/ZP per visit, no extinction (C7 default).
+#   ``linear_fit_per_image_extinction`` — same with fitted extinction when airmass varies.
+#   ``linear_fit_per_night`` — one T/ZP for the whole night (derive-transform).
 #
-calibration_preset: str = "linear_fit_per_night"
+calibration_preset: str = "linear_fit_per_image"
 
 ###
 #   Fine-grained calibration (used when calibration_config_mode == "custom")
 #
 calibration_strategy: str = "linear_fit"      # median_zp | linear_fit
-calibration_grouping: str = "per_night"       # per_image | per_night | ensemble | fixed
+calibration_grouping: str = "per_image"       # per_image | per_night | ensemble | fixed
 extinction_mode: str = "none"                 # none | tabulated | from_comparison_stars | from_value_airmass
 color_term_fit: str = "auto"                  # always | auto | never
 fit_sigma_clip: float = 2.5
-derive_transform_from_data: bool = True
+derive_transform_from_data: bool = False
 zp_subsample_statistic: bool = False
 exposure_pairing: str = "jd_nearest"          # jd_nearest | index
 exposure_jd_tolerance: float = 0.001
@@ -361,10 +362,6 @@ if __name__ == '__main__':
         outer_annulus_radius=outer_annulus_radius,
         radii_unit=radii_unit,
         reference_image_index=reference_image_index,
-        wcs_method="astap",
-        max_pixel_between_objects=3,
-        ooi_correlation_strategy=1,
-        cross_identification_limit=1,
         n_allowed_non_detections_object=n_allowed_non_detections_object,
         separation_limit=separation_limit * u.arcsec,
         calibration_source=calibration_source,
@@ -375,20 +372,12 @@ if __name__ == '__main__':
             f"{filter_list[0]}-{filter_list[1]}" if len(filter_list) >= 2 else None
         ),
         aperture_radius=radius_aperture,
-        extract_only_circular_region=False,
-        identify_cluster_gaia_data=False,
-        clean_objs_using_pm=False,
-        # Magnitude output: keep calibrated catalog system (APASS → Johnson/Vega).
-        # To convert: convert_magnitudes=True plus e.g. output_filter_set="sdss"
-        # and output_magnitude_system="ab" (SDSS+Vega is rejected).
-        convert_magnitudes=False,
-        output_filter_set="auto",
-        output_magnitude_system="auto",
+        # Magnitude output stays in the calibrated catalog system
+        # (APASS → Johnson/Vega). To convert: convert_magnitudes=True plus
+        # e.g. output_filter_set="sdss" (SDSS+Vega is rejected).
         skip_light_curve=False,
         light_curve_binning_factor=binning_factor,
-        plot_light_curve_objects_of_interest=True,
         plot_light_curve_calibration_objects=True,
-        plot_light_curve_all_objects=False,
         skip_derive_limiting_magnitude=True,
         # Cap individual inter-filter pair PDFs (None=all, 0=overview only):
         # diagnostic_plots__correlation_inter_filter_max_pair_plots=25,

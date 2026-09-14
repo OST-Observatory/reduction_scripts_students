@@ -265,27 +265,34 @@ radii_unit: str = 'arcsec'
 reference_image_index: int | str = "auto"
 
 #   Maximal sky separation between two objects in arcsec (inter-filter and
-#   unaligned intra-filter). Tightening this does not hide HAT-P-20: OOI
-#   identification uses at least 5" unless you set ooi_separation_limit.
-separation_limit: float = 5.
+#   intra-filter when frames are matched on the sky). Only close pairs of
+#   stars are affected by this value, so it rarely changes the result.
+#   With per-frame WCS solutions (≈0.1" precision) 1–2" is safe.
+separation_limit: float = 2.
+
+#   Sky radius (arcsec) for identifying the object(s) of interest on the
+#   reference image. ``None`` = at least 5" (or separation_limit if larger).
+#   Set this explicitly when the target has a close neighbour or when the
+#   catalog coordinates are poor.
+ooi_separation_limit: float | None = None
 
 #   Sparse tracks: keep stars that miss some frames (long C7 series).
 require_complete_intersection: bool = False
 #   Keep a track if it is detected on at least this fraction of frames.
 min_detection_fraction: float = 0.3
-#   Miss-count floor; combined with the fraction so a small number does not
-#   force near-completeness on a long series.
-n_allowed_non_detections_object: int = 5
 
-#   Independent ASTAP solutions on aligned frames make the same pixel look
-#   like a different sky position and mix track IDs. Keep False when
-#   ``1_reduce_images.py`` used shift_all=True (``aa_true`` or ``wcs``).
-#   True only for native (unwarped) pixels.
+#   False: solve the reference frame only and share that WCS with every frame.
+#   Correct when all frames sit on one pixel grid (``1_reduce_images.py``
+#   with shift_all=True and ``aa_true`` or ``wcs``).
+#   True: solve every frame. Required when the frames are NOT on one grid
+#   (translation-only ``aa``, or shift_all=False), because the tracks are then
+#   matched on the sky and need each frame's own WCS. Check the log line
+#   "Intra-filter matching in pixel coordinates" vs "... on sky" and panel (b)
+#   of diagnostics/correlation/track_qc_<filter>.
 wcs_solve_all_images: bool = False
 
-#   Intra-filter tracks: ``auto`` uses pixel matching when the series is
-#   registered (``aa_true`` or ``wcs`` with shift_all). ``sky`` is for
-#   unaligned native extract.
+#   Intra-filter tracks: ``auto`` uses pixel matching when the frames are
+#   registered to within a few pixels, otherwise sky matching.
 correlation_coordinates: str = "auto"
 # correlation_coordinates: str = "pixel"
 # correlation_coordinates: str = "sky"
@@ -386,13 +393,16 @@ if __name__ == '__main__':
         outer_annulus_radius=outer_annulus_radius,
         radii_unit=radii_unit,
         reference_image_index=reference_image_index,
-        n_allowed_non_detections_object=n_allowed_non_detections_object,
         require_complete_intersection=require_complete_intersection,
         min_detection_fraction=min_detection_fraction,
         wcs_solve_all_images=wcs_solve_all_images,
         correlation_link_mode=correlation_link_mode,
         correlation_coordinates=correlation_coordinates,
         separation_limit=separation_limit * u.arcsec,
+        ooi_separation_limit=(
+            None if ooi_separation_limit is None
+            else ooi_separation_limit * u.arcsec
+        ),
         calibration_source=calibration_source,
         calibration_catalog_mag_range=magnitude_range,
         calibration_match_radius=calibration_match_radius_arcsec * u.arcsec,

@@ -59,8 +59,9 @@ temperature_tolerance: float = 5.
 #   Number of cores used for multiprocessing
 n_cores_multiprocessing: int = 8
 
-#   Alignment backend. ``aa_true`` (astroalign) is the C7 default. Use
-#   ``wcs`` if similarity transforms paint too many NaNs (large dithers).
+#   Alignment backend. ``aa_true`` (astroalign similarity) is the C7 default.
+#   ``wcs`` reprojects onto a shared sky grid (handles rotation / flip);
+#   needs a current ost_photometry so the bad-pixel mask is not smeared.
 shift_method: str = "aa_true"
 # shift_method: str = "wcs"
 

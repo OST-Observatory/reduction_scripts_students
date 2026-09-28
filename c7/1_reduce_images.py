@@ -56,8 +56,25 @@ exposure_time_tolerance: float = 5.
 #   Tolerance between the camera chip temperatures of the images
 temperature_tolerance: float = 5.
 
-#   Number of cores used for multiprocessing
-n_cores_multiprocessing: int = 8
+#   Number of cores used for multiprocessing (``None`` = half the CPUs)
+n_cores_multiprocessing: int | None = None
+
+#   Measure the quality of every reduced frame (FWHM, roundness, number of
+#   stars, sky background). Results: ``output/frame_quality.ecsv``, the FITS
+#   headers, and ``output/diagnostics/frame_quality/``. Needed for the two
+#   options below.
+measure_frame_quality: bool = True
+
+#   Reject poor frames before the alignment. ``None`` keeps every frame
+#   (default for light curves: a rejected frame is a missing epoch). Example
+#   that drops frames with a strongly deviating FWHM or almost no stars
+#   (clouds); rejected frames are moved to ``output/rejected_lights/``:
+frame_selection: dict | None = None
+# frame_selection: dict | None = {"fwhm_sigma_clip": 3.0, "n_stars_min": 20}
+
+#   Alignment reference: ``best_fwhm`` = sharpest frame (per filter), or
+#   ``first`` = first frame in time (the old behaviour).
+reference_image_selection: str = "best_fwhm"
 
 #   Alignment backend. ``aa_true`` (astroalign similarity) is the C7 default.
 #   ``wcs`` reprojects onto a shared sky grid (handles rotation / flip);
@@ -128,6 +145,9 @@ if __name__ == '__main__':
         shift_method=shift_method,
         temperature_tolerance=temperature_tolerance,
         n_cores_multiprocessing=n_cores_multiprocessing,
+        measure_frame_quality=measure_frame_quality,
+        frame_selection=frame_selection,
+        reference_image_selection=reference_image_selection,
     )
 
     print(style.Bcolors.OKGREEN + "   Done" + style.Bcolors.ENDC)

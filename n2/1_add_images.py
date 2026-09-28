@@ -67,8 +67,43 @@ exposure_time_tolerance: float = 5.0
 #   Tolerance between the camera chip temperatures of the images
 temperature_tolerance: float = 5.0
 
-#   Number of cores used for multiprocessing
-n_cores_multiprocessing: int = 8
+#   Number of cores used for multiprocessing (``None`` = half the CPUs)
+n_cores_multiprocessing: int | None = None
+
+#   Alignment backend. ``aa_true`` (astroalign similarity; pixel match) is
+#   the default. ``wcs`` reprojects onto a shared sky grid (uses
+#   ``wcs_method``, default ASTAP, if a frame has no celestial WCS).
+shift_method: str = "aa_true"
+# shift_method: str = "wcs"
+
+#   Warp every science frame onto one common reference grid (all filters).
+shift_all: bool = True
+
+#   Measure the quality of every reduced frame (FWHM, roundness, number of
+#   stars, sky background). Results: ``output/frame_quality.ecsv``, the FITS
+#   headers, and ``output/diagnostics/frame_quality/``. Needed for the
+#   selection, the weighting and the ``best_fwhm`` reference below.
+measure_frame_quality: bool = True
+
+#   Reject poor frames before stacking. ``None`` stacks every frame. Example:
+#   keep the sharpest 90 % per filter (frames without stars are dropped as
+#   well); rejected frames are moved to ``output/rejected_lights/``:
+frame_selection: dict | None = None
+# frame_selection: dict | None = {"best_fraction": 0.9}
+
+#   Per-frame weights in the stack: ``none`` (equal weights), ``fwhm``,
+#   ``n_stars`` or ``noise``. Weighting sharpens the stack but changes its
+#   effective PSF and noise; for photometry on the stack ``none`` is the
+#   conservative choice.
+stack_weighting: str = "none"
+
+#   Alignment reference: ``best_fwhm`` = sharpest frame of the data set, or
+#   ``first`` = first frame in time (the old behaviour).
+reference_image_selection: str = "best_fwhm"
+
+#   Keep the registered single frames (``output/aligned_lights/``) after
+#   stacking, e.g. to re-stack with another selection.
+keep_aligned_lights: bool = False
 
 
 ############################################################################
@@ -124,10 +159,13 @@ if __name__ == "__main__":
         target_name=target_name,
         temperature_tolerance=temperature_tolerance,
         n_cores_multiprocessing=n_cores_multiprocessing,
-        # Pixel match (default) or WCS reproject: shift_method="wcs"
-        # (uses wcs_method, default ASTAP, if a frame has no celestial WCS).
-        shift_method="aa_true",
-        shift_all=True,
+        shift_method=shift_method,
+        shift_all=shift_all,
+        measure_frame_quality=measure_frame_quality,
+        frame_selection=frame_selection,
+        stack_weighting=stack_weighting,
+        reference_image_selection=reference_image_selection,
+        keep_aligned_lights=keep_aligned_lights,
     )
 
     print(style.Bcolors.OKGREEN + "   Done" + style.Bcolors.ENDC)

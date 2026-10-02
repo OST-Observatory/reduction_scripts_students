@@ -57,9 +57,19 @@ target_name: str | None = None
 #   but it can be changed as needed).
 output_dir: str = "output/"
 
-#   Remove cosmic rays?
-rm_cosmic_rays: bool = True
-# rm_cosmic_rays: bool = False
+#   Remove cosmic rays (L.A.Cosmic)? ``"auto"`` leaves them to the stack for
+#   filters with at least ``cosmic_ray_auto_min_frames`` images (the
+#   sigma-clipped stack rejects them there) and removes them otherwise.
+rm_cosmic_rays: bool | str = "auto"
+# rm_cosmic_rays: bool | str = True
+# rm_cosmic_rays: bool | str = False
+cosmic_ray_auto_min_frames: int = 7
+
+#   Gain and read noise of the camera: ``"catalog"`` (FITS header / camera
+#   catalog) or ``"measured"`` (from the bias and flat frames of this data
+#   set; falls back to the catalog if that is not possible).
+camera_noise_source: str = "catalog"
+# camera_noise_source: str = "measured"
 
 #   Tolerance between science and dark exposure times in s
 exposure_time_tolerance: float = 5.0
@@ -155,6 +165,8 @@ if __name__ == "__main__":
         raw_files,
         output_dir,
         rm_cosmic_rays=rm_cosmic_rays,
+        cosmic_ray_auto_min_frames=cosmic_ray_auto_min_frames,
+        camera_noise_source=camera_noise_source,
         exposure_time_tolerance=exposure_time_tolerance,
         target_name=target_name,
         temperature_tolerance=temperature_tolerance,

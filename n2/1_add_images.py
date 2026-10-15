@@ -65,10 +65,12 @@ rm_cosmic_rays: bool | str = "auto"
 # rm_cosmic_rays: bool | str = False
 cosmic_ray_auto_min_frames: int = 7
 
-#   Gain and read noise of the camera: ``"catalog"`` (FITS header / camera
-#   catalog) or ``"measured"`` (from the bias and flat frames of this data
-#   set; falls back to the catalog if that is not possible).
-camera_noise_source: str = "catalog"
+#   Gain and read noise of the camera: ``"auto"`` (measured from the bias and
+#   flat frames when the FITS header does not name the readout mode, as with
+#   MaxIm DL's "Fast" / "Normal", else catalog), ``"catalog"`` (FITS header /
+#   camera catalog) or ``"measured"`` (always from the bias and flat frames
+#   of this data set; falls back to the catalog if that is not possible).
+camera_noise_source: str = "auto"
 # camera_noise_source: str = "measured"
 
 #   Tolerance between science and dark exposure times in s

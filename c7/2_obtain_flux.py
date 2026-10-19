@@ -244,8 +244,8 @@ calibration_match_radius_arcsec: float = 1.0
 #   every frame and stack measures the same fraction of the stars), ``'arcsec'``
 #   (e.g. 5 / 7 / 10) or ``'pixel'``. The limiting magnitude uses the same
 #   aperture.
-radius_aperture: float = 2.0
-inner_annulus_radius: float = 2.8
+radius_aperture: float = 1.0
+inner_annulus_radius: float = 2.5
 outer_annulus_radius: float = 4.0
 radii_unit: str = 'fwhm'
 

@@ -29,8 +29,9 @@ ra_star: str = "??:??:??"
 dec_star: str = "??:??:??"
 
 ###
-#   Date of the minimum (UTC)
-#   "yyyy-mm-ddThh:mm:ss" e.g., "2020-09-18T01:00:00"
+#   Time of the minimum as BJD_TDB (barycentric, as in ephemerides):
+#   full Julian date e.g. "2459110.54167", or an ISO date in TDB
+#   "yyyy-mm-ddThh:mm:ss" e.g. "2020-09-18T01:00:00"
 #   This parameter is optional. Set it to '?' if unknown.
 #
 transit_time: str = "?"

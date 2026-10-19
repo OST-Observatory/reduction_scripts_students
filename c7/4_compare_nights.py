@@ -26,7 +26,9 @@ dec_obj: str = "+??:??:??"
 
 object_id: int | None = None
 
-#   Date of the minimum (UTC) — needed for the folded overlay
+#   Time of the minimum as BJD_TDB (barycentric, as in ephemerides),
+#   needed for the folded overlay:
+#   full Julian date e.g. "2459110.54167", or an ISO date in TDB
 #   "yyyy-mm-ddThh:mm:ss" e.g. "2020-09-18T01:00:00"
 transit_time: str = "?"
 

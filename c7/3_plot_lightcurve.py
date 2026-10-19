@@ -21,8 +21,9 @@ dec_obj: str = "+??:??:??"
 
 object_id: int | None = None
 
-#   Date of the minimum (UTC)
-#   "yyyy:mm:ddThh:mm:ss" e.g., "2020-09-18T01:00:00"
+#   Time of the minimum as BJD_TDB (barycentric, as in ephemerides):
+#   full Julian date e.g. "2459110.54167", or an ISO date in TDB
+#   "yyyy-mm-ddThh:mm:ss" e.g. "2020-09-18T01:00:00"
 transit_time: str = "?"
 
 #   Period (Algol: p=2.867315d, RZ Cas: p=1.1952499d, TV Cas: p=1.81259d)

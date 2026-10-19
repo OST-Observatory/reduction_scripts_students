@@ -239,25 +239,15 @@ calibration_match_radius_arcsec: float = 1.0
 ############################################################################
 #   Aperture options
 #
-#   If True, APER radii are factor × image FWHM (pixels). The absolute
-#   radii below are then unused for extraction. Limiting-magnitude
-#   ``aperture_radius`` still uses ``radius_aperture``. Typical factor
-#   1.5–2.5; annulus factors must stay larger than the aperture factor.
-aperture_scale_with_fwhm: bool = False
-aperture_fwhm_factor: float = 2.0
-inner_annulus_fwhm_factor: float = 2.8
-outer_annulus_fwhm_factor: float = 4.0
-
-#   Extraction radius stars in arcsec or pixel (used when the flag is False)
-radius_aperture: float = 5.
-
-#   Extraction radius background (inner and outer radii) in arcsec or pixel
-inner_annulus_radius: float = 7.
-outer_annulus_radius: float = 10.
-
-#   Unit
-# r_unit: str = 'pixel'
-radii_unit: str = 'arcsec'
+#   Radii of the aperture and of the sky annulus (inner, outer) in
+#   ``radii_unit``: ``'fwhm'`` (multiples of each image's FWHM, recommended:
+#   every frame and stack measures the same fraction of the stars), ``'arcsec'``
+#   (e.g. 5 / 7 / 10) or ``'pixel'``. The limiting magnitude uses the same
+#   aperture.
+radius_aperture: float = 2.0
+inner_annulus_radius: float = 2.8
+outer_annulus_radius: float = 4.0
+radii_unit: str = 'fwhm'
 
 ############################################################################
 #   Correlation options
@@ -385,10 +375,6 @@ if __name__ == '__main__':
         multiplier_background_rms=multiplier_background_rms,
         multiplier_background_rms_epsf=multiplier_background_rms_epsf,
         photometry_extraction_method=photometry_extraction_method,
-        aperture_scale_with_fwhm=aperture_scale_with_fwhm,
-        aperture_fwhm_factor=aperture_fwhm_factor,
-        inner_annulus_fwhm_factor=inner_annulus_fwhm_factor,
-        outer_annulus_fwhm_factor=outer_annulus_fwhm_factor,
         radius_aperture=radius_aperture,
         inner_annulus_radius=inner_annulus_radius,
         outer_annulus_radius=outer_annulus_radius,

@@ -113,6 +113,16 @@ output_dir: str = 'output/'
 photometry_extraction_method: str = 'APER'
 # photometry_extraction_method: str = 'PSF'
 
+#   ePSF photometry in crowded fields (only used if the method is PSF):
+#   ``psf_group_wing_fwhm``: stars within the fit box + this many FWHM are
+#   fitted together, so a neighbour's wings do not bias a faint star
+#   (None: the old, much faster grouping; in a rich cluster with poor seeing
+#   the default can take ~10x longer). ``psf_residual_sky``: second pass
+#   with the sky measured after all fitted stars are subtracted (False
+#   halves the time).
+psf_group_wing_fwhm: float | None = 2.5
+psf_residual_sky: bool = True
+
 ###
 #   Calibration configuration mode: "preset" or "custom"
 #
@@ -375,6 +385,8 @@ if __name__ == '__main__':
         multiplier_background_rms=multiplier_background_rms,
         multiplier_background_rms_epsf=multiplier_background_rms_epsf,
         photometry_extraction_method=photometry_extraction_method,
+        psf_group_wing_fwhm=psf_group_wing_fwhm,
+        psf_residual_sky=psf_residual_sky,
         radius_aperture=radius_aperture,
         inner_annulus_radius=inner_annulus_radius,
         outer_annulus_radius=outer_annulus_radius,

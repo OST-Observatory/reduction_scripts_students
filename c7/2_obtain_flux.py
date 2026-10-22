@@ -152,8 +152,9 @@ exposure_jd_tolerance: float = 0.001
 reference_filter: str | None = None
 
 ############################################################################
-#   Calibration source (possibilities: simbad_vot, UCAC4, GSC2.3, URAT1,
-#                                      NOMAD, HMUBV, GSPC2.4, APASS,
+#   Calibration source (possibilities: auto, Stetson, APASS, simbad_vot,
+#                                      UCAC4, GSC2.3, URAT1, NOMAD, HMUBV,
+#                                      GSPC2.4,
 #                                      Swift/UVOT, XMM-OM, VRI-NCC)
 #
 '''
@@ -201,6 +202,22 @@ The Full GSC2.3.2 Catalogue:
     Johnson B,V,R-band magnitude
 '''
 # calibration_source: str = 'GSPC2.4'
+
+
+'''
+    Automatic choice (package default): the first catalog of
+    ``calibration_auto_sources`` (Stetson -> APASS -> SDSS) that covers every
+    filter with at least 20 stars in the field. The log says which one.
+'''
+# calibration_source: str = 'auto'
+
+
+'''
+    Stetson's and Landolt's standards (Pancino+, 2022): Johnson UBVI (R
+    sparse), errors of a few mmag. Only standard fields and clusters, not
+    the usual exoplanet fields.
+'''
+# calibration_source: str = 'Stetson'
 
 
 '''

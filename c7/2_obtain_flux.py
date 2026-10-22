@@ -259,6 +259,15 @@ inner_annulus_radius: float = 2.5
 outer_annulus_radius: float = 4.0
 radii_unit: str = 'fwhm'
 
+#   Smaller aperture for images with poor seeing (crowded fields): in a rich
+#   cluster with seeing above ``poor_seeing_fwhm_arcsec`` the light of
+#   unresolved faint stars makes the typical faint star too faint (up to
+#   ~40 mmag for NGC 7789 in 5.5"; the mean is unbiased). 0.7 reduces that
+#   by about a third.
+#   ``None``: always ``radius_aperture``. Same unit as the other radii.
+poor_seeing_radius_aperture: float | None = None
+poor_seeing_fwhm_arcsec: float = 4.0
+
 ############################################################################
 #   Correlation options
 #
@@ -391,6 +400,8 @@ if __name__ == '__main__':
         inner_annulus_radius=inner_annulus_radius,
         outer_annulus_radius=outer_annulus_radius,
         radii_unit=radii_unit,
+        poor_seeing_radius_aperture=poor_seeing_radius_aperture,
+        poor_seeing_fwhm_arcsec=poor_seeing_fwhm_arcsec,
         reference_image_index=reference_image_index,
         require_complete_intersection=require_complete_intersection,
         min_detection_fraction=min_detection_fraction,
@@ -409,7 +420,6 @@ if __name__ == '__main__':
         light_curve_color=(
             f"{filter_list[0]}-{filter_list[1]}" if len(filter_list) >= 2 else None
         ),
-        aperture_radius=radius_aperture,
         # Magnitude output stays in the calibrated catalog system
         # (APASS → Johnson/Vega). To convert: convert_magnitudes=True plus
         # e.g. output_filter_set="sdss" (SDSS+Vega is rejected).

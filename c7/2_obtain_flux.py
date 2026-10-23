@@ -152,7 +152,7 @@ exposure_jd_tolerance: float = 0.001
 reference_filter: str | None = None
 
 ############################################################################
-#   Calibration source (possibilities: auto, Stetson, APASS, simbad_vot,
+#   Calibration source (possibilities: auto, Stetson, APASS, GaiaXP, simbad_vot,
 #                                      UCAC4, GSC2.3, URAT1, NOMAD, HMUBV,
 #                                      GSPC2.4,
 #                                      Swift/UVOT, XMM-OM, VRI-NCC)
@@ -218,6 +218,14 @@ The Full GSC2.3.2 Catalogue:
     the usual exoplanet fields.
 '''
 # calibration_source: str = 'Stetson'
+
+
+'''
+    Gaia DR3 synthetic photometry from the XP spectra (Gaia Collab., 2023):
+    all sky, Johnson UBVRI and SDSS ugriz to G ~ 17.65 (u noisy). Bands
+    outside their validated range and blends are left out.
+'''
+# calibration_source: str = 'GaiaXP'
 
 
 '''

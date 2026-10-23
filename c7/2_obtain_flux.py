@@ -206,7 +206,7 @@ The Full GSC2.3.2 Catalogue:
 
 '''
     Automatic choice (package default): the first catalog of
-    ``calibration_auto_sources`` (Stetson -> APASS -> SDSS) that covers every
+    ``calibration_auto_sources`` (Stetson -> APASS -> GaiaXP -> SDSS) that covers every
     filter with at least 20 stars in the field. The log says which one.
 '''
 # calibration_source: str = 'auto'

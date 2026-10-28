@@ -72,6 +72,7 @@ import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 
+from ost_photometry import terminal_output
 from ost_photometry.analyze.post_processing.light_curve import (
     combine_light_curve_night_tables,
     plot_nights_compare_from_table,
@@ -115,6 +116,7 @@ def _filters_to_plot(paths: list[str]) -> list[str]:
 
 
 def main() -> None:
+    terminal_output.print_header("C7 4/4: compare the nights")
     if not nights:
         raise ValueError("Set ``nights`` to at least one output directory or ECSV.")
     for raw in nights:
@@ -160,5 +162,6 @@ if __name__ == "__main__":
     try:
         main()
     except (FileNotFoundError, ValueError) as exc:
-        print(exc, file=sys.stderr)
+        terminal_output.print_to_terminal(str(exc), indent=1, style_name="FAIL")
         sys.exit(1)
+    terminal_output.print_done()

@@ -103,8 +103,8 @@ from astropy import log
 log.setLevel('ERROR')
 
 from ost_photometry.reduce import redu
+from ost_photometry import terminal_output
 from ost_photometry.reduce import utilities
-from ost_photometry import style
 
 
 ############################################################################
@@ -114,6 +114,7 @@ from ost_photometry import style
 if __name__ == '__main__':
     #   Set start time
     start_time = time.time()
+    terminal_output.print_header("C7 1/4: reduce the images")
 
     ###
     #   Prepare directories and make checks
@@ -150,5 +151,4 @@ if __name__ == '__main__':
         reference_image_selection=reference_image_selection,
     )
 
-    print(style.Bcolors.OKGREEN + "   Done" + style.Bcolors.ENDC)
-    print("--- %s minutes ---" % ((time.time() - start_time) / 60.))
+    terminal_output.print_done(start_time, next_step="2_obtain_flux.py")

@@ -355,7 +355,7 @@ import warnings
 
 warnings.filterwarnings('ignore')
 
-from ost_photometry import style
+from ost_photometry import terminal_output
 from ost_photometry.analyze import analyze
 from ost_photometry.analyze.pipeline import PipelineConfig
 
@@ -368,6 +368,7 @@ import astropy.units as u
 if __name__ == '__main__':
     #   Set start time
     start_time = time.time()
+    terminal_output.print_header("C7 2/4: photometry, calibration and light curves")
 
     #   Prepare variable lists and dictionaries from the individual
     #   definitions above
@@ -513,5 +514,4 @@ if __name__ == '__main__':
         extraction_mode="multi",
     )
 
-    print(style.Bcolors.OKGREEN + "   Done" + style.Bcolors.ENDC)
-    print("--- %s minutes ---" % ((time.time() - start_time) / 60.))
+    terminal_output.print_done(start_time, next_step="3_plot_lightcurve.py")

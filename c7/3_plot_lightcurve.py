@@ -63,13 +63,13 @@ file_type: str = "pdf"
 ############################################################################
 
 import os
-import sys
 
 import astropy.units as u
 import numpy as np
 from astropy.coordinates import SkyCoord
 from astropy.table import Table
 
+from ost_photometry import terminal_output
 from ost_photometry.analyze.post_processing.light_curve import (
     object_id_from_epoch_native_sky,
     plot_from_light_curves_table,
@@ -138,7 +138,9 @@ def _filters_to_plot(tbl: Table) -> list[str]:
         if color in available:
             out.append(str(color))
         else:
-            print(f"Note: colour {color!r} not in table (have {available}).", file=sys.stderr)
+            terminal_output.print_to_terminal(
+                f"Note: colour {color!r} not in table (have {available}).",
+                indent=1, style_name="WARNING")
     if not out:
         # Prefer photometric bands over colour strings
         bands = [f for f in available if "-" not in f]
@@ -147,6 +149,7 @@ def _filters_to_plot(tbl: Table) -> list[str]:
 
 
 def main() -> None:
+    terminal_output.print_header("C7 3/4: plot the light curves")
     path = _resolve_table_path()
     tbl = Table.read(path)
     sid = _resolve_id(tbl)
@@ -177,3 +180,4 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
+    terminal_output.print_done(next_step="4_compare_nights.py (several nights)")

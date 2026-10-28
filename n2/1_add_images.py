@@ -132,7 +132,7 @@ from astropy import log
 
 log.setLevel("ERROR")
 
-from ost_photometry import style
+from ost_photometry import terminal_output
 from ost_photometry.reduce import redu, utilities
 
 ############################################################################
@@ -142,6 +142,7 @@ from ost_photometry.reduce import redu, utilities
 if __name__ == "__main__":
     #   Set start time
     start_time = time.time()
+    terminal_output.print_header("N2 1/3: reduce and stack the images")
 
     ###
     #   Prepare directories and make checks
@@ -182,5 +183,4 @@ if __name__ == "__main__":
         keep_aligned_lights=keep_aligned_lights,
     )
 
-    print(style.Bcolors.OKGREEN + "   Done" + style.Bcolors.ENDC)
-    print("--- %s minutes ---" % ((time.time() - start_time) / 60.0))
+    terminal_output.print_done(start_time, next_step="2_extract_data_students.py")

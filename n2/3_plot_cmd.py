@@ -131,13 +131,14 @@ isochrone_configuration_file: str = 'parsec_3p6_noTP-AGB_isochrones.yaml'
 #                               Libraries                                  #
 ############################################################################
 
+import time
 import sys
 
 import matplotlib
 from ost_photometry import checks
+from ost_photometry import terminal_output
 from ost_photometry.analyze.cmd_prepare import load_cmd_table
 from ost_photometry.analyze.plots import plot_cmds_from_table
-from ost_photometry.style import Bcolors
 
 matplotlib.rcParams['pdf.fonttype']: int = 42
 
@@ -147,14 +148,14 @@ matplotlib.rcParams['pdf.fonttype']: int = 42
 
 
 if __name__ == '__main__':
+    start_time = time.time()
+    terminal_output.print_header("N2 3/3: colour-magnitude diagram")
     checks.check_output_directories(output_dir)
 
-    print(f'{Bcolors.BOLD}   Read file: {cmd_file_name}{Bcolors.ENDC}')
+    terminal_output.print_to_terminal(f"Read file: {cmd_file_name}", indent=1)
     tbl_cmd = load_cmd_table(cmd_file_name)
     if len(tbl_cmd) == 0:
-        print(
-            f'{Bcolors.FAIL}   The CMD table is empty => EXIT{Bcolors.ENDC}'
-        )
+        terminal_output.print_to_terminal("The CMD table is empty => EXIT", indent=1, style_name="FAIL")
         sys.exit()
 
     plot_cmds_from_table(
@@ -184,4 +185,4 @@ if __name__ == '__main__':
         cmd_diagnostics=cmd_diagnostics,
     )
 
-    print(f'{Bcolors.OKGREEN}   Done{Bcolors.ENDC}')
+    terminal_output.print_done(start_time)

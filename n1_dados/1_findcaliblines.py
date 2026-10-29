@@ -371,7 +371,7 @@ m1, m2, m3, b = pylab.polyfit(fit_x, fit_y, 3)
 print(bcolors.OKGREEN + "   Fit: " + 'y = ' + str('%.2E' % Decimal(m1)) + " x^3$ + " + str(
     '%.2E' % Decimal(m2)) + " x^2$ + " + str('%.2E' % Decimal(m3)) + "x + " + str('{:7.2f}'.format(b)) + bcolors.ENDC)
 
-fig2.suptitle('$\lambda$ = ' + str('%.2E' % Decimal(m1)) + r" $\times$ pxl$^3$ + " + str(
+fig2.suptitle(r'$\lambda$ = ' + str('%.2E' % Decimal(m1)) + r" $\times$ pxl$^3$ + " + str(
     '%.2E' % Decimal(m2)) + r" $\times$ pxl$^2$ + " + str('%.2E' % Decimal(m3)) + r" $\times$ pxl + " + str(
     '{:7.2f}'.format(b)), fontsize=15)
 # fig2.canvas.mpl_connect('key_press_event',press_key)

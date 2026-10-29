@@ -104,12 +104,9 @@ linelist = [
 ############################################################################
 
 import os, pylab, time, sys, matplotlib
-from numpy import matrix
 from astropy.io import fits
 import matplotlib.pyplot as plt
 import numpy as np
-from scipy.interpolate import interp1d
-from scipy.optimize import curve_fit
 from decimal import Decimal
 
 ############################################################################

@@ -40,7 +40,6 @@ import sys
 from astropy.coordinates import SkyCoord, EarthLocation, AltAz
 from astropy.time import Time
 import astropy.units as u
-from astropy.units.function import units
 
 
 ####################   DEFINE COLOR FORMATTING    ####################

@@ -71,7 +71,7 @@ bgRegionEnd = 0
 #                            Script Routines                                     #
 ##################################################################################
 
-import os, pylab, time, sys, matplotlib
+import os, pylab, sys, matplotlib
 from astropy.io import fits
 import matplotlib.pyplot as plt
 import numpy as np

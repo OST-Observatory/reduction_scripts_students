@@ -81,7 +81,6 @@ apply_flat_calibration: bool = False
 #                               Libraries                                  #
 ############################################################################
 
-import sys
 
 from pathlib import Path
 

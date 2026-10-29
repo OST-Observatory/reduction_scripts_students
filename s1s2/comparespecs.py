@@ -50,7 +50,7 @@ output_file_name = 'spectrum.dat'
 #                                Script Routines                                 #
 ##################################################################################
 
-import os, sys, string, pylab
+import os, sys, pylab
 from astropy.io import fits
 import numpy as np
 import matplotlib.pyplot as plt
